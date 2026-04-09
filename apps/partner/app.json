@@ -1,1 +1,11 @@
-
+{
+  "expo": {
+    "name": "LastCall Partner",
+    "slug": "lastcall-partner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "splash": { "backgroundColor": "#2E7D32" },
+    "android": { "package": "pk.lastcall.partner" },
+    "ios": { "bundleIdentifier": "pk.lastcall.partner" }
+  }
+}
