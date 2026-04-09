@@ -1,1 +1,13 @@
-
+{
+  "name": "lastcall",
+  "private": true,
+  "workspaces": ["backend", "apps/customer", "apps/partner"],
+  "scripts": {
+    "backend":  "npm --workspace=backend start",
+    "customer": "npm --workspace=apps/customer run start",
+    "partner":  "npm --workspace=apps/partner run start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
