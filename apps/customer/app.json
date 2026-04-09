@@ -1,1 +1,11 @@
-
+{
+  "expo": {
+    "name": "LastCall",
+    "slug": "lastcall-customer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "splash": { "backgroundColor": "#E53935" },
+    "android": { "package": "pk.lastcall.customer" },
+    "ios": { "bundleIdentifier": "pk.lastcall.customer" }
+  }
+}
