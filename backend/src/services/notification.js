@@ -1,22 +1,49 @@
 const { messaging } = require('../config/firebase');
-const { query } = require('../config/db');
 
-const sendPush = async (userId, title, body, data = {}) => {
+/**
+ * Send a single FCM push notification
+ * @param {string} token  — device FCM token
+ * @param {string} title
+ * @param {string} body
+ * @param {object} data   — extra key/value payload
+ */
+const sendNotification = async (token, title, body, data = {}) => {
+  if (!token) return;
   try {
-    const res = await query(`SELECT fcm_token FROM users WHERE id=$1`,[userId]);
-    const token = res.rows[0]?.fcm_token;
-    if (!token) return;
-    await messaging.send({
-      token, notification: { title, body }, data,
-      android: { priority: 'high' },
-      apns: { payload: { aps: { sound: 'default' } } },
-    });
-  } catch (err) { console.error('Push error:', err.message); }
+    const message = {
+      token,
+      notification: { title, body },
+      data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
+      android: { priority: 'high', notification: { sound: 'default', channelId: 'lastcall_default' } },
+      apns:    { payload: { aps: { sound: 'default', badge: 1 } } },
+    };
+    const result = await messaging.send(message);
+    return result;
+  } catch (err) {
+    console.error('FCM send error:', err.message);
+  }
 };
 
-const sendOrderConfirmation = async (order, bag) =>
-  sendPush(order.user_id, '✅ Order Confirmed!',
-    `Your ${bag.title} is ready. Pickup code: ${order.pickup_code}`,
-    { order_id: order.id, type: 'order_confirmed' });
+/**
+ * Send to multiple tokens (multicast)
+ * @param {string[]} tokens
+ */
+const sendMulticast = async (tokens, title, body, data = {}) => {
+  if (!tokens?.length) return;
+  const validTokens = tokens.filter(Boolean);
+  if (!validTokens.length) return;
+  try {
+    const message = {
+      tokens: validTokens,
+      notification: { title, body },
+      data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
+      android: { priority: 'high' },
+    };
+    const result = await messaging.sendEachForMulticast(message);
+    return result;
+  } catch (err) {
+    console.error('FCM multicast error:', err.message);
+  }
+};
 
-module.exports = { sendPush, sendOrderConfirmation };
+module.exports = { sendNotification, sendMulticast };
