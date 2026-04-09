@@ -410,4 +410,118 @@ function buildOrdersTable(orders) {
   if (!orders.length) return '<div class="empty">No orders found</div>';
   return `<table>
     <thead><tr>
-      <th>
+      <th>Code</th><th>Customer</th><th>Partner</th><th>Bag</th>
+      <th>Status</th><th>Amount (PKR)</th><th>Payout (PKR)</th><th>Date</th>
+    </tr></thead>
+    <tbody>${orders.map(o => `
+      <tr>
+        <td class="td-bold">${o.pickup_code}</td>
+        <td><div>${esc(o.customer_name||'—')}</div><div class="td-muted">${esc(o.customer_phone||'')}</div></td>
+        <td>${esc(o.business_name||'—')}</td>
+        <td>${esc(o.bag_title||'—')}</td>
+        <td>${orderBadge(o.order_status)}</td>
+        <td class="td-bold">${fmtPKR(o.total_amount)}</td>
+        <td>${fmtPKR(o.partner_payout)}</td>
+        <td class="td-muted">${fmtDate(o.created_at)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+/* ── BAGS ── */
+async function loadBags() {
+  try {
+    const d = await apiFetch('/api/admin/bags');
+    S.bags = d.bags;
+    renderBags();
+    setRefreshTime();
+  } catch(e) { document.getElementById('bagsTable').innerHTML = `<div class="empty">⚠️ ${e.message}</div>`; }
+}
+
+function renderBags() {
+  const q   = (document.getElementById('bagSearch')?.value || '').toLowerCase();
+  let list  = S.bags;
+  if (q) list = list.filter(b => (b.title+b.business_name+b.area).toLowerCase().includes(q));
+  if (!list.length) { document.getElementById('bagsTable').innerHTML = '<div class="empty">No bags today</div>'; return; }
+  document.getElementById('bagsTable').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Title</th><th>Partner</th><th>Area</th><th>Original</th>
+        <th>Price</th><th>Qty Left</th><th>Pickup Time</th><th>Status</th>
+      </tr></thead>
+      <tbody>${list.map(b => `
+        <tr>
+          <td class="td-bold">${esc(b.title)}</td>
+          <td>${esc(b.business_name)}</td>
+          <td>${esc(b.area||'—')}</td>
+          <td class="td-muted"><s>PKR ${fmtPKR(b.original_price)}</s></td>
+          <td class="td-bold" style="color:var(--green)">PKR ${fmtPKR(b.discounted_price)}</td>
+          <td>${b.quantity_left}/${b.quantity_total}</td>
+          <td class="td-muted">${b.pickup_start}–${b.pickup_end}</td>
+          <td>${bagStatusBadge(b.status)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ── CUSTOMERS ── */
+async function loadCustomers() {
+  try {
+    const d = await apiFetch('/api/admin/users');
+    S.customers = d.users;
+    renderCustomers();
+    setRefreshTime();
+  } catch(e) { document.getElementById('customersTable').innerHTML = `<div class="empty">⚠️ ${e.message}</div>`; }
+}
+
+function renderCustomers() {
+  const q   = (document.getElementById('customerSearch')?.value || '').toLowerCase();
+  let list  = S.customers;
+  if (q) list = list.filter(u => (u.phone+u.name+u.email).toLowerCase().includes(q));
+  if (!list.length) { document.getElementById('customersTable').innerHTML = '<div class="empty">No customers found</div>'; return; }
+  document.getElementById('customersTable').innerHTML = `
+    <table>
+      <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Orders</th><th>Joined</th></tr></thead>
+      <tbody>${list.map(u => `
+        <tr>
+          <td class="td-bold">${esc(u.name||'—')}</td>
+          <td>${esc(u.phone||'—')}</td>
+          <td class="td-muted">${esc(u.email||'—')}</td>
+          <td>${u.order_count||0}</td>
+          <td class="td-muted">${fmtDate(u.created_at)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ── HELPERS ── */
+function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function fmtPKR(n){ return Math.round(parseFloat(n)||0).toLocaleString('en-PK'); }
+function fmtDate(s){ return s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—'; }
+
+function statusBadge(s){
+  const m={approved:'badge-green',pending:'badge-orange',suspended:'badge-red'};
+  return `<span class="badge ${m[s]||'badge-gray'}">${s}</span>`;
+}
+function orderBadge(s){
+  const m={confirmed:'badge-blue',ready:'badge-orange',picked_up:'badge-green',cancelled:'badge-red'};
+  const l={confirmed:'Confirmed',ready:'Ready',picked_up:'Picked Up',cancelled:'Cancelled'};
+  return `<span class="badge ${m[s]||'badge-gray'}">${l[s]||s}</span>`;
+}
+function bagStatusBadge(s){
+  const m={available:'badge-green',sold_out:'badge-orange',cancelled:'badge-red'};
+  return `<span class="badge ${m[s]||'badge-gray'}">${s.replace('_',' ')}</span>`;
+}
+
+let toastTimer;
+function toast(msg, isError=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? '#c62828' : '#222';
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
