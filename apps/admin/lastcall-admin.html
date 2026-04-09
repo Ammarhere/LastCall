@@ -1,156 +1,126 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>LastCall Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --green:   #2E7D32; --green-light: #E8F5E9; --green-hover: #1B5E20;
-    --red:     #E53935; --red-light: #FFEBEE;
-    --orange:  #E65100; --orange-light: #FFF3E0;
-    --blue:    #1565C0; --blue-light: #E3F2FD;
-    --bg:      #F5F5F5; --surface: #FFFFFF;
-    --border:  rgba(0,0,0,0.08); --text: #111; --muted: #666; --faint: #999;
-    --sidebar-w: 240px; --radius: 14px;
-    --shadow: 0 2px 8px rgba(0,0,0,0.07);
-    --font: 'Inter', sans-serif;
-  }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
-
-  /* ── SIDEBAR ── */
-  .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
-  .sidebar-logo { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
-  .logo-mark { font-size: 22px; font-weight: 900; color: var(--green); letter-spacing: -0.5px; }
-  .logo-sub  { font-size: 11px; color: var(--faint); font-weight: 600; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .nav { flex: 1; padding: 12px 0; overflow-y: auto; }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer;
-    font-size: 14px; font-weight: 600; color: var(--muted); border-radius: 0;
-    transition: all 0.15s; border-left: 3px solid transparent; }
-  .nav-item:hover { background: var(--bg); color: var(--text); }
-  .nav-item.active { background: var(--green-light); color: var(--green); border-left-color: var(--green); }
-  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-  .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--faint); }
-
-  /* ── MAIN ── */
-  .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
-  .topbar { background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 50; }
-  .topbar-title { font-size: 18px; font-weight: 800; }
-  .topbar-actions { display: flex; align-items: center; gap: 12px; }
-  .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700;
-    cursor: pointer; border: none; transition: all 0.15s; }
-  .btn-primary { background: var(--green); color: #fff; }
-  .btn-primary:hover { background: var(--green-hover); }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--bg); color: var(--text); }
-  .content { padding: 28px; }
-
-  /* ── VIEWS ── */
-  .view { display: none; }
-  .view.active { display: block; }
-
-  /* ── STAT CARDS ── */
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .stat-card { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-  .stat-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-  .stat-value { font-size: 28px; font-weight: 900; line-height: 1; }
-  .stat-sub   { font-size: 12px; color: var(--faint); margin-top: 4px; }
-  .c-green  { color: var(--green); }
-  .c-blue   { color: var(--blue); }
-  .c-orange { color: var(--orange); }
-  .c-red    { color: var(--red); }
-
-  /* ── TABLE ── */
-  .table-wrap { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between; }
-  .table-title { font-size: 15px; font-weight: 800; }
-  .table-search { padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px;
-    font-size: 13px; font-family: var(--font); outline: none; width: 220px; }
-  .table-search:focus { border-color: var(--green); }
-  table { width: 100%; border-collapse: collapse; }
-  thead th { font-size: 11px; font-weight: 700; color: var(--faint); text-transform: uppercase;
-    letter-spacing: 0.5px; padding: 10px 20px; text-align: left; background: var(--bg); border-bottom: 1px solid var(--border); }
-  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: var(--bg); }
-  tbody td { padding: 12px 20px; font-size: 13px; vertical-align: middle; }
-  .td-bold { font-weight: 700; }
-  .td-muted { color: var(--muted); }
-
-  /* ── BADGE ── */
-  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 700; }
-  .badge-green  { background: var(--green-light);  color: var(--green); }
-  .badge-orange { background: var(--orange-light); color: var(--orange); }
-  .badge-red    { background: var(--red-light);    color: var(--red); }
-  .badge-blue   { background: var(--blue-light);   color: var(--blue); }
-  .badge-gray   { background: #F5F5F5; color: #666; }
-
-  /* ── LOGIN ── */
-  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); width: 100%; }
-  .login-box  { background: var(--surface); border-radius: 20px; padding: 40px; width: 380px; box-shadow: var(--shadow); }
-  .login-logo { font-size: 28px; font-weight: 900; color: var(--green); margin-bottom: 4px; }
-  .login-sub  { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
-  .form-group { margin-bottom: 16px; }
-  .form-label { font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .form-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
-    font-size: 14px; font-family: var(--font); outline: none; transition: border 0.15s; }
-  .form-input:focus { border-color: var(--green); }
-  .btn-login { width: 100%; padding: 13px; background: var(--green); color: #fff; border: none;
-    border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
-  .btn-login:hover { background: var(--green-hover); }
-  .login-error { color: var(--red); font-size: 13px; margin-top: 8px; text-align: center; }
-
-  /* ── ACTION BUTTONS in table ── */
-  .action-btn { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;
-    cursor: pointer; border: none; transition: all 0.15s; }
-  .action-approve  { background: var(--green-light); color: var(--green); }
-  .action-approve:hover { background: var(--green); color: #fff; }
-  .action-suspend  { background: var(--red-light); color: var(--red); }
-  .action-suspend:hover { background: var(--red); color: #fff; }
-
-  /* ── TOAST ── */
-  .toast { position: fixed; bottom: 24px; right: 24px; background: #222; color: #fff; padding: 12px 20px;
-    border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 999; display: none;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
-  .toast.show { display: block; animation: slideUp 0.2s ease; }
-  @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-  /* ── EMPTY STATE ── */
-  .empty { text-align: center; padding: 60px 20px; color: var(--faint); font-size: 15px; }
-
-  /* ── LOADING ── */
-  .loading { text-align: center; padding: 40px; color: var(--faint); }
-
-  /* ── FILTER TABS ── */
-  .filter-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .filter-tab { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
-    cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); transition: all 0.15s; }
-  .filter-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#2E7D32;--green-l:#E8F5E9;--green-h:#1B5E20;
+  --red:#E53935;--red-l:#FFEBEE;
+  --orange:#E65100;--orange-l:#FFF3E0;
+  --blue:#1565C0;--blue-l:#E3F2FD;
+  --bg:#F5F5F5;--surface:#fff;--border:rgba(0,0,0,0.08);
+  --text:#111;--muted:#666;--faint:#999;
+  --sw:240px;--r:14px;--shadow:0 2px 8px rgba(0,0,0,0.07);
+  --font:'Inter',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+/* SIDEBAR */
+.sidebar{width:var(--sw);background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.sb-logo{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+.logo-mark{font-size:22px;font-weight:900;color:var(--green);letter-spacing:-0.5px}
+.logo-sub{font-size:11px;color:var(--faint);font-weight:600;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;
+  font-size:14px;font-weight:600;color:var(--muted);border-left:3px solid transparent;transition:all .15s}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--green-l);color:var(--green);border-left-color:var(--green)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.sb-footer{padding:16px 20px;border-top:1px solid var(--border);font-size:12px;color:var(--faint)}
+/* MAIN */
+.main{margin-left:var(--sw);flex:1;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:18px;font-weight:800}
+.topbar-actions{display:flex;align-items:center;gap:12px}
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;font-family:var(--font)}
+.btn-primary{background:var(--green);color:#fff}.btn-primary:hover{background:var(--green-h)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{background:var(--bg)}
+.content{padding:28px}
+/* VIEWS */
+.view{display:none}.view.active{display:block}
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--surface);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-value{font-size:30px;font-weight:900;line-height:1}
+.stat-sub{font-size:12px;color:var(--faint);margin-top:4px}
+.c-green{color:var(--green)}.c-blue{color:var(--blue)}.c-orange{color:var(--orange)}.c-red{color:var(--red)}
+/* TABLE */
+.table-wrap{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.table-title{font-size:15px;font-weight:800}
+.table-search{padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);outline:none;width:220px}
+.table-search:focus{border-color:var(--green)}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;
+  padding:10px 20px;text-align:left;background:var(--bg);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg)}
+tbody td{padding:12px 20px;font-size:13px;vertical-align:middle}
+.td-bold{font-weight:700}.td-muted{color:var(--muted)}
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-green{background:var(--green-l);color:var(--green)}
+.badge-orange{background:var(--orange-l);color:var(--orange)}
+.badge-red{background:var(--red-l);color:var(--red)}
+.badge-blue{background:var(--blue-l);color:var(--blue)}
+.badge-gray{background:#F5F5F5;color:#666}
+/* ACTION BTNS */
+.ab{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .15s;font-family:var(--font)}
+.ab-approve{background:var(--green-l);color:var(--green)}.ab-approve:hover{background:var(--green);color:#fff}
+.ab-suspend{background:var(--red-l);color:var(--red)}.ab-suspend:hover{background:var(--red);color:#fff}
+.ab-pending{background:#FFF3E0;color:#E65100}.ab-pending:hover{background:#E65100;color:#fff}
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);width:100%}
+.login-box{background:var(--surface);border-radius:20px;padding:40px;width:380px;box-shadow:var(--shadow)}
+.login-logo{font-size:28px;font-weight:900;color:var(--green);margin-bottom:4px}
+.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);outline:none;transition:border .15s}
+.form-input:focus{border-color:var(--green)}
+.btn-login{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:10px;
+  font-size:15px;font-weight:800;cursor:pointer;margin-top:8px;transition:background .15s;font-family:var(--font)}
+.btn-login:hover{background:var(--green-h)}
+.login-error{color:var(--red);font-size:13px;margin-top:8px;text-align:center}
+/* FILTER TABS */
+.filter-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-tab{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;
+  border:1.5px solid var(--border);background:var(--surface);color:var(--muted);transition:all .15s}
+.filter-tab.active{background:var(--green);color:#fff;border-color:var(--green)}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#222;color:#fff;padding:12px 20px;
+  border-radius:10px;font-size:13px;font-weight:600;z-index:999;opacity:0;pointer-events:none;
+  transition:opacity .2s;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.show{opacity:1;pointer-events:auto}
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:60px 20px;color:var(--faint);font-size:15px}
+.loading{text-align:center;padding:40px;color:var(--faint)}
 </style>
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" style="width:100%;">
+<!-- LOGIN -->
+<div id="loginPage" style="width:100%">
   <div class="login-wrap">
     <div class="login-box">
       <div class="login-logo">LastCall</div>
       <div class="login-sub">Admin Dashboard · Karachi Operations</div>
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input class="form-input" id="loginEmail" type="email" placeholder="admin@lastcall.pk" />
+        <input class="form-input" id="loginEmail" type="email" placeholder="admin@lastcall.pk"/>
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
-        <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" />
+        <input class="form-input" id="loginPassword" type="password" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <button class="btn-login" onclick="doLogin()">Sign In →</button>
       <div class="login-error" id="loginError"></div>
@@ -159,102 +129,99 @@
 </div>
 
 <!-- ADMIN APP -->
-<div id="adminApp" style="display:none; width:100%; display:none;">
-
-  <!-- Sidebar -->
+<div id="adminApp" style="display:none;width:100%">
   <aside class="sidebar">
-    <div class="sidebar-logo">
+    <div class="sb-logo">
       <div class="logo-mark">LastCall</div>
       <div class="logo-sub">Admin Portal</div>
     </div>
     <nav class="nav">
-      <div class="nav-item active" onclick="showView('dashboard')">
-        <span class="nav-icon">📊</span> Dashboard
-      </div>
-      <div class="nav-item" onclick="showView('partners')">
-        <span class="nav-icon">🏪</span> Partners
-      </div>
-      <div class="nav-item" onclick="showView('orders')">
-        <span class="nav-icon">🛍️</span> Orders
-      </div>
-      <div class="nav-item" onclick="showView('bags')">
-        <span class="nav-icon">🎒</span> Bags
-      </div>
+      <div class="nav-item active" onclick="showView('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
+      <div class="nav-item" onclick="showView('partners')"><span class="nav-icon">🏪</span>Partners</div>
+      <div class="nav-item" onclick="showView('orders')"><span class="nav-icon">🛍️</span>Orders</div>
+      <div class="nav-item" onclick="showView('bags')"><span class="nav-icon">🎒</span>Bags</div>
+      <div class="nav-item" onclick="showView('customers')"><span class="nav-icon">👤</span>Customers</div>
     </nav>
-    <div class="sidebar-footer">
-      <div style="font-weight:700; color: var(--text); margin-bottom:4px;" id="adminName">Admin</div>
-      <div style="cursor:pointer; color: var(--red);" onclick="logout()">Sign out</div>
+    <div class="sb-footer">
+      <div style="font-weight:700;color:var(--text);margin-bottom:4px" id="adminName">Admin</div>
+      <div style="cursor:pointer;color:var(--red)" onclick="logout()">Sign out</div>
     </div>
   </aside>
 
-  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <div class="topbar-title" id="viewTitle">Dashboard</div>
       <div class="topbar-actions">
-        <span style="font-size:13px; color:var(--faint);" id="lastRefresh"></span>
+        <span style="font-size:13px;color:var(--faint)" id="lastRefresh"></span>
         <button class="btn btn-ghost" onclick="refreshCurrent()">↻ Refresh</button>
       </div>
     </div>
 
     <div class="content">
 
-      <!-- DASHBOARD VIEW -->
+      <!-- DASHBOARD -->
       <div class="view active" id="view-dashboard">
-        <div class="stat-grid" id="statGrid">
-          <div class="loading">Loading stats…</div>
-        </div>
+        <div class="stat-grid" id="statGrid"><div class="loading">Loading stats…</div></div>
         <div class="table-wrap">
-          <div class="table-header">
-            <span class="table-title">Recent Orders</span>
-          </div>
-          <div id="recentOrdersTable"><div class="loading">Loading…</div></div>
+          <div class="table-header"><span class="table-title">Recent Orders</span></div>
+          <div id="recentOrders"><div class="loading">Loading…</div></div>
         </div>
       </div>
 
-      <!-- PARTNERS VIEW -->
+      <!-- PARTNERS -->
       <div class="view" id="view-partners">
-        <div class="filter-tabs" id="partnerFilterTabs">
-          <div class="filter-tab active" onclick="filterPartners('all', this)">All</div>
-          <div class="filter-tab" onclick="filterPartners('pending', this)">Pending Approval</div>
-          <div class="filter-tab" onclick="filterPartners('approved', this)">Approved</div>
-          <div class="filter-tab" onclick="filterPartners('suspended', this)">Suspended</div>
+        <div class="filter-tabs">
+          <div class="filter-tab active" onclick="filterPartners('all',this)">All</div>
+          <div class="filter-tab" onclick="filterPartners('pending',this)">⏳ Pending</div>
+          <div class="filter-tab" onclick="filterPartners('approved',this)">✅ Approved</div>
+          <div class="filter-tab" onclick="filterPartners('suspended',this)">🚫 Suspended</div>
         </div>
         <div class="table-wrap">
           <div class="table-header">
             <span class="table-title">Partners</span>
-            <input class="table-search" id="partnerSearch" placeholder="Search name, area…" oninput="renderPartners()" />
+            <input class="table-search" id="partnerSearch" placeholder="Search name, area…" oninput="renderPartners()"/>
           </div>
           <div id="partnersTable"><div class="loading">Loading…</div></div>
         </div>
       </div>
 
-      <!-- ORDERS VIEW -->
+      <!-- ORDERS -->
       <div class="view" id="view-orders">
         <div class="filter-tabs">
-          <div class="filter-tab active" onclick="filterOrders('all', this)">All</div>
-          <div class="filter-tab" onclick="filterOrders('confirmed', this)">Confirmed</div>
-          <div class="filter-tab" onclick="filterOrders('ready', this)">Ready</div>
-          <div class="filter-tab" onclick="filterOrders('picked_up', this)">Picked Up</div>
-          <div class="filter-tab" onclick="filterOrders('cancelled', this)">Cancelled</div>
+          <div class="filter-tab active" onclick="filterOrders('all',this)">All</div>
+          <div class="filter-tab" onclick="filterOrders('confirmed',this)">Confirmed</div>
+          <div class="filter-tab" onclick="filterOrders('ready',this)">Ready</div>
+          <div class="filter-tab" onclick="filterOrders('picked_up',this)">Picked Up</div>
+          <div class="filter-tab" onclick="filterOrders('cancelled',this)">Cancelled</div>
         </div>
         <div class="table-wrap">
           <div class="table-header">
             <span class="table-title">All Orders</span>
-            <input class="table-search" id="orderSearch" placeholder="Search partner, customer…" oninput="renderOrders()" />
+            <input class="table-search" id="orderSearch" placeholder="Search partner, customer…" oninput="renderOrders()"/>
           </div>
           <div id="ordersTable"><div class="loading">Loading…</div></div>
         </div>
       </div>
 
-      <!-- BAGS VIEW -->
+      <!-- BAGS -->
       <div class="view" id="view-bags">
         <div class="table-wrap">
           <div class="table-header">
             <span class="table-title">Today's Bags</span>
-            <input class="table-search" id="bagSearch" placeholder="Search bags…" oninput="renderBags()" />
+            <input class="table-search" id="bagSearch" placeholder="Search bags…" oninput="renderBags()"/>
           </div>
           <div id="bagsTable"><div class="loading">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- CUSTOMERS -->
+      <div class="view" id="view-customers">
+        <div class="table-wrap">
+          <div class="table-header">
+            <span class="table-title">Customers</span>
+            <input class="table-search" id="customerSearch" placeholder="Search phone, name…" oninput="renderCustomers()"/>
+          </div>
+          <div id="customersTable"><div class="loading">Loading…</div></div>
         </div>
       </div>
 
@@ -267,10 +234,10 @@
 <script>
 const API = 'http://localhost:4000';
 let TOKEN = null;
-let state = { stats: null, partners: [], orders: [], bags: [], partnerFilter: 'all', orderFilter: 'all' };
+let S = { stats:null, partners:[], orders:[], bags:[], customers:[], partnerFilter:'all', orderFilter:'all' };
 let currentView = 'dashboard';
 
-// ── AUTH ──────────────────────────────────────────
+/* ── AUTH ── */
 async function doLogin() {
   const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -278,168 +245,128 @@ async function doLogin() {
   errEl.textContent = '';
   if (!email || !password) { errEl.textContent = 'Enter email and password.'; return; }
   try {
-    const res = await fetch(`${API}/api/auth/admin-login`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+    const r = await fetch(`${API}/api/auth/admin-login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Login failed');
-    TOKEN = data.token;
-    document.getElementById('adminName').textContent = email.split('@')[0];
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Login failed'; return; }
+    TOKEN = d.token;
+    document.getElementById('adminName').textContent = d.user.name || d.user.email;
     document.getElementById('loginPage').style.display  = 'none';
     document.getElementById('adminApp').style.display   = 'flex';
-    loadAll();
-  } catch (e) { errEl.textContent = e.message; }
+    loadDashboard();
+  } catch (e) { errEl.textContent = 'Cannot reach server — is the backend running?'; }
 }
 
 function logout() {
   TOKEN = null;
-  document.getElementById('loginPage').style.display = '';
   document.getElementById('adminApp').style.display  = 'none';
+  document.getElementById('loginPage').style.display = 'block';
 }
 
-document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-
-// ── API HELPERS ───────────────────────────────────
-async function apiFetch(path, opts = {}) {
-  const res = await fetch(`${API}${path}`, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}`, ...(opts.headers || {}) },
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
+/* ── FETCH HELPER ── */
+async function apiFetch(path) {
+  const r = await fetch(`${API}${path}`, { headers:{ Authorization:`Bearer ${TOKEN}` } });
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+async function apiPatch(path, body) {
+  const r = await fetch(`${API}${path}`, {
+    method:'PATCH', headers:{ Authorization:`Bearer ${TOKEN}`, 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
-  return data;
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
 }
 
-function toast(msg, color = '#222') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.background = color;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// ── LOAD ALL DATA ─────────────────────────────────
-async function loadAll() {
-  await Promise.all([loadStats(), loadPartners(), loadOrders(), loadBags()]);
-  document.getElementById('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString('en-PK', {hour:'2-digit',minute:'2-digit'});
-}
-
-function refreshCurrent() { loadAll(); }
-
-async function loadStats() {
-  try {
-    const data = await apiFetch('/api/admin/stats');
-    state.stats = data;
-    renderStats();
-  } catch (e) { console.error(e); }
-}
-
-async function loadPartners() {
-  try {
-    const data = await apiFetch('/api/admin/partners');
-    state.partners = data.partners;
-    renderPartners();
-  } catch (e) { console.error(e); }
-}
-
-async function loadOrders() {
-  try {
-    const data = await apiFetch('/api/admin/orders');
-    state.orders = data.orders;
-    renderOrders();
-    renderRecentOrders();
-  } catch (e) { console.error(e); }
-}
-
-async function loadBags() {
-  try {
-    const data = await apiFetch('/api/bags');
-    state.bags = data.bags;
-    renderBags();
-  } catch (e) { console.error(e); }
-}
-
-// ── VIEWS ─────────────────────────────────────────
+/* ── NAVIGATION ── */
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`view-${name}`).classList.add('active');
-  event.currentTarget.classList.add('active');
-  const titles = { dashboard:'Dashboard', partners:'Partners', orders:'Orders', bags:"Today's Bags" };
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(`'${name}'`)) n.classList.add('active');
+  });
+  const titles = { dashboard:'Dashboard', partners:'Partners', orders:'Orders', bags:'Today\'s Bags', customers:'Customers' };
   document.getElementById('viewTitle').textContent = titles[name] || name;
   currentView = name;
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'partners')  loadPartners();
+  if (name === 'orders')    loadOrders();
+  if (name === 'bags')      loadBags();
+  if (name === 'customers') loadCustomers();
 }
 
-// ── RENDER STATS ──────────────────────────────────
-function renderStats() {
-  const s = state.stats;
-  if (!s) return;
-  const fmt = n => Number(n).toLocaleString('en-PK');
-  document.getElementById('statGrid').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Total Customers</div>
-      <div class="stat-value c-blue">${fmt(s.users?.total || 0)}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Partners</div>
-      <div class="stat-value c-green">${fmt(s.partners?.approved || 0)}</div>
-      <div class="stat-sub">${s.partners?.pending || 0} pending approval</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Orders Today</div>
-      <div class="stat-value c-orange">${fmt(s.orders?.today || 0)}</div>
-      <div class="stat-sub">${fmt(s.orders?.total || 0)} all-time</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Total GMV</div>
-      <div class="stat-value c-green">PKR ${fmt(s.revenue?.gmv || 0)}</div>
-      <div class="stat-sub">Revenue: PKR ${fmt(s.revenue?.revenue || 0)}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Completion Rate</div>
-      <div class="stat-value c-green">${s.orders?.total > 0 ? Math.round(s.orders.completed/s.orders.total*100) : 0}%</div>
-      <div class="stat-sub">${fmt(s.orders?.completed || 0)} picked up</div>
-    </div>
-  `;
+function refreshCurrent() { showView(currentView); }
+
+function setRefreshTime() {
+  document.getElementById('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
 }
 
-// ── RENDER PARTNERS ───────────────────────────────
-function filterPartners(status, el) {
-  state.partnerFilter = status;
-  document.querySelectorAll('#partnerFilterTabs .filter-tab').forEach(t => t.classList.remove('active'));
+/* ── DASHBOARD ── */
+async function loadDashboard() {
+  try {
+    const d = await apiFetch('/api/admin/stats');
+    S.stats = d;
+    document.getElementById('statGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Today's Orders</div><div class="stat-value c-blue">${d.today_orders}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value c-green">${d.total_orders}</div></div>
+      <div class="stat-card"><div class="stat-label">Revenue (PKR)</div><div class="stat-value c-green">${fmtPKR(d.total_revenue)}</div><div class="stat-sub">completed orders</div></div>
+      <div class="stat-card"><div class="stat-label">Approved Partners</div><div class="stat-value">${d.approved_partners}</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Approval</div><div class="stat-value c-orange">${d.pending_partners}</div><div class="stat-sub">need review</div></div>
+      <div class="stat-card"><div class="stat-label">Customers</div><div class="stat-value">${d.total_customers}</div></div>
+      <div class="stat-card"><div class="stat-label">Today's Bags</div><div class="stat-value c-blue">${d.today_bags}</div><div class="stat-sub">available now</div></div>
+    `;
+    const od = await apiFetch('/api/admin/orders?limit=10');
+    S.orders = od.orders;
+    document.getElementById('recentOrders').innerHTML = buildOrdersTable(od.orders.slice(0,10));
+    setRefreshTime();
+  } catch(e) { document.getElementById('statGrid').innerHTML = `<div class="empty">⚠️ ${e.message}</div>`; }
+}
+
+/* ── PARTNERS ── */
+async function loadPartners() {
+  try {
+    const d = await apiFetch('/api/admin/partners');
+    S.partners = d.partners;
+    renderPartners();
+    setRefreshTime();
+  } catch(e) { document.getElementById('partnersTable').innerHTML = `<div class="empty">⚠️ ${e.message}</div>`; }
+}
+
+function filterPartners(f, el) {
+  S.partnerFilter = f;
+  document.querySelectorAll('#view-partners .filter-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderPartners();
 }
 
 function renderPartners() {
-  const q = (document.getElementById('partnerSearch')?.value || '').toLowerCase();
-  let list = state.partners;
-  if (state.partnerFilter !== 'all') list = list.filter(p => p.status === state.partnerFilter);
-  if (q) list = list.filter(p => [p.business_name, p.area, p.owner_name, p.phone].join(' ').toLowerCase().includes(q));
-  const statusBadge = s => ({
-    approved: '<span class="badge badge-green">Approved</span>',
-    pending:  '<span class="badge badge-orange">Pending</span>',
-    suspended:'<span class="badge badge-red">Suspended</span>',
-  }[s] || s);
-  document.getElementById('partnersTable').innerHTML = list.length === 0 ? '<div class="empty">No partners found.</div>' : `
+  const q   = (document.getElementById('partnerSearch')?.value || '').toLowerCase();
+  let list  = S.partners;
+  if (S.partnerFilter !== 'all') list = list.filter(p => p.status === S.partnerFilter);
+  if (q) list = list.filter(p => (p.business_name+p.area+p.owner_name+p.owner_phone).toLowerCase().includes(q));
+  if (!list.length) { document.getElementById('partnersTable').innerHTML = '<div class="empty">No partners found</div>'; return; }
+  document.getElementById('partnersTable').innerHTML = `
     <table>
       <thead><tr>
-        <th>Business</th><th>Owner</th><th>Phone</th><th>Area</th><th>Category</th><th>Status</th><th>Actions</th>
+        <th>Business</th><th>Owner</th><th>Area</th><th>Category</th>
+        <th>Status</th><th>Orders</th><th>Revenue (PKR)</th><th>Action</th>
       </tr></thead>
       <tbody>${list.map(p => `
         <tr>
-          <td class="td-bold">${p.business_name}</td>
-          <td class="td-muted">${p.owner_name || '—'}</td>
-          <td class="td-muted">${p.phone || '—'}</td>
-          <td class="td-muted">${p.area || '—'}</td>
-          <td class="td-muted">${p.category}</td>
+          <td class="td-bold">${esc(p.business_name)}</td>
+          <td><div>${esc(p.owner_name||'—')}</div><div class="td-muted">${esc(p.phone||'')}</div></td>
+          <td>${esc(p.area||'—')}</td>
+          <td>${esc(p.category)}</td>
           <td>${statusBadge(p.status)}</td>
-          <td>
-            ${p.status !== 'approved'  ? `<button class="action-btn action-approve" onclick="updatePartner('${p.id}','approved')">Approve</button>` : ''}
-            ${p.status !== 'suspended' ? `<button class="action-btn action-suspend" onclick="updatePartner('${p.id}','suspended')" style="margin-left:6px">Suspend</button>` : ''}
-            ${p.status === 'suspended' ? `<button class="action-btn action-approve" onclick="updatePartner('${p.id}','approved')" style="margin-left:6px">Reinstate</button>` : ''}
+          <td>${p.total_orders||0}</td>
+          <td>${fmtPKR(p.total_revenue||0)}</td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            ${p.status!=='approved'  ? `<button class="ab ab-approve"  onclick="updatePartner('${p.id}','approved')">Approve</button>`:''}
+            ${p.status!=='suspended' ? `<button class="ab ab-suspend"  onclick="updatePartner('${p.id}','suspended')">Suspend</button>`:''}
+            ${p.status!=='pending'   ? `<button class="ab ab-pending"  onclick="updatePartner('${p.id}','pending')">Pending</button>`:''}
           </td>
         </tr>`).join('')}
       </tbody>
@@ -448,108 +375,39 @@ function renderPartners() {
 
 async function updatePartner(id, status) {
   try {
-    await apiFetch(`/api/admin/partners/${id}/status`, { method: 'PATCH', body: { status } });
-    toast(`Partner ${status}!`, status === 'approved' ? '#2E7D32' : '#c62828');
-    await loadPartners();
-  } catch (e) { toast(e.message, '#c62828'); }
+    await apiPatch(`/api/admin/partners/${id}/status`, { status });
+    toast(`Partner ${status} ✅`);
+    loadPartners();
+  } catch(e) { toast(`Error: ${e.message}`, true); }
 }
 
-// ── RENDER ORDERS ─────────────────────────────────
-function filterOrders(status, el) {
-  state.orderFilter = status;
+/* ── ORDERS ── */
+async function loadOrders() {
+  try {
+    const d = await apiFetch('/api/admin/orders?limit=200');
+    S.orders = d.orders;
+    renderOrders();
+    setRefreshTime();
+  } catch(e) { document.getElementById('ordersTable').innerHTML = `<div class="empty">⚠️ ${e.message}</div>`; }
+}
+
+function filterOrders(f, el) {
+  S.orderFilter = f;
   document.querySelectorAll('#view-orders .filter-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderOrders();
 }
 
 function renderOrders() {
-  const q = (document.getElementById('orderSearch')?.value || '').toLowerCase();
-  let list = state.orders;
-  if (state.orderFilter !== 'all') list = list.filter(o => o.order_status === state.orderFilter);
-  if (q) list = list.filter(o => [o.business_name, o.customer_name, o.customer_phone, o.bag_title, o.pickup_code].join(' ').toLowerCase().includes(q));
-  const statusBadge = s => ({
-    confirmed: '<span class="badge badge-blue">Confirmed</span>',
-    ready:     '<span class="badge badge-orange">Ready</span>',
-    picked_up: '<span class="badge badge-green">Picked Up</span>',
-    cancelled: '<span class="badge badge-red">Cancelled</span>',
-  }[s] || s);
-  document.getElementById('ordersTable').innerHTML = list.length === 0 ? '<div class="empty">No orders found.</div>' : `
-    <table>
-      <thead><tr>
-        <th>Partner</th><th>Bag</th><th>Customer</th><th>Amount</th><th>Code</th><th>Payment</th><th>Status</th><th>Time</th>
-      </tr></thead>
-      <tbody>${list.map(o => `
-        <tr>
-          <td class="td-bold">${o.business_name}</td>
-          <td class="td-muted">${o.bag_title}</td>
-          <td class="td-muted">${o.customer_name || '—'}<br><span style="font-size:11px;color:var(--faint)">${o.customer_phone||''}</span></td>
-          <td class="td-bold">PKR ${o.total_amount}</td>
-          <td><code style="font-weight:900;font-size:13px;">${o.pickup_code}</code></td>
-          <td>${o.payment_method} · ${o.payment_status === 'paid' ? '<span style="color:var(--green);font-weight:700">Paid</span>' : '<span style="color:var(--orange);font-weight:700">Pending</span>'}</td>
-          <td>${statusBadge(o.order_status)}</td>
-          <td class="td-muted">${new Date(o.created_at).toLocaleString('en-PK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+  const q    = (document.getElementById('orderSearch')?.value || '').toLowerCase();
+  let list   = S.orders;
+  if (S.orderFilter !== 'all') list = list.filter(o => o.order_status === S.orderFilter);
+  if (q) list = list.filter(o => (o.business_name+o.customer_name+o.customer_phone+o.bag_title+o.area).toLowerCase().includes(q));
+  document.getElementById('ordersTable').innerHTML = buildOrdersTable(list);
 }
 
-function renderRecentOrders() {
-  const list = state.orders.slice(0, 8);
-  if (!list.length) { document.getElementById('recentOrdersTable').innerHTML = '<div class="empty">No orders yet.</div>'; return; }
-  const statusBadge = s => ({
-    confirmed: '<span class="badge badge-blue">Confirmed</span>',
-    ready:     '<span class="badge badge-orange">Ready</span>',
-    picked_up: '<span class="badge badge-green">Picked Up</span>',
-    cancelled: '<span class="badge badge-red">Cancelled</span>',
-  }[s] || s);
-  document.getElementById('recentOrdersTable').innerHTML = `
-    <table>
-      <thead><tr><th>Partner</th><th>Customer</th><th>Amount</th><th>Code</th><th>Status</th><th>Time</th></tr></thead>
-      <tbody>${list.map(o => `
-        <tr>
-          <td class="td-bold">${o.business_name}</td>
-          <td class="td-muted">${o.customer_name || '—'}</td>
-          <td class="td-bold">PKR ${o.total_amount}</td>
-          <td><code style="font-weight:900">${o.pickup_code}</code></td>
-          <td>${statusBadge(o.order_status)}</td>
-          <td class="td-muted">${new Date(o.created_at).toLocaleString('en-PK',{hour:'2-digit',minute:'2-digit'})}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
-}
-
-// ── RENDER BAGS ───────────────────────────────────
-function renderBags() {
-  const q = (document.getElementById('bagSearch')?.value || '').toLowerCase();
-  let list = state.bags;
-  if (q) list = list.filter(b => [b.business_name, b.title, b.area].join(' ').toLowerCase().includes(q));
-  const statusBadge = s => ({
-    available: '<span class="badge badge-green">Available</span>',
-    sold_out:  '<span class="badge badge-orange">Sold Out</span>',
-    cancelled: '<span class="badge badge-red">Cancelled</span>',
-  }[s] || s);
-  document.getElementById('bagsTable').innerHTML = list.length === 0 ? '<div class="empty">No bags found.</div>' : `
-    <table>
-      <thead><tr>
-        <th>Partner</th><th>Bag Title</th><th>Area</th><th>Price</th><th>Original</th><th>Qty Left</th><th>Pickup</th><th>Status</th>
-      </tr></thead>
-      <tbody>${list.map(b => `
-        <tr>
-          <td class="td-bold">${b.business_name}</td>
-          <td>${b.title}</td>
-          <td class="td-muted">${b.area || '—'}</td>
-          <td class="td-bold" style="color:var(--green)">PKR ${b.discounted_price}</td>
-          <td class="td-muted" style="text-decoration:line-through">PKR ${b.original_price}</td>
-          <td class="td-bold">${b.quantity_left} / ${b.quantity_total}</td>
-          <td class="td-muted">${b.pickup_start} – ${b.pickup_end}</td>
-          <td>${statusBadge(b.status)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
-}
-
-// Auto-refresh every 60 seconds
-setInterval(() => { if (TOKEN) loadAll(); }, 60000);
-</script>
-</body>
-</html>
+function buildOrdersTable(orders) {
+  if (!orders.length) return '<div class="empty">No orders found</div>';
+  return `<table>
+    <thead><tr>
+      <th>
