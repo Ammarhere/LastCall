@@ -16,6 +16,7 @@ if (!existsSync('uploads')) mkdirSync('uploads');
 app.use('/api/auth',     require('./routes/auth'));
 app.use('/api/bags',     require('./routes/bags'));
 app.use('/api/orders',   require('./routes/orders'));
+app.use('/api/payments', require('./routes/payments'));
 app.use('/api/partners', require('./routes/partners'));
 app.use('/api/users',    require('./routes/users'));
 app.use('/api/admin',    require('./routes/admin'));
