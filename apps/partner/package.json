@@ -5,7 +5,7 @@
   "scripts": { "start": "expo start" },
   "dependencies": {
     "expo": "~52.0.0",
-    "react": "18.3.2",
+    "react": "18.3.1",
     "react-native": "0.76.3",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
