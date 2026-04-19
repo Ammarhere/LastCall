@@ -194,6 +194,7 @@ Launch → LoginScreen (phone OTP) → HomeScreen (area chips: Burns Road, DHA, 
 | Raast | Bank transfer | SBP instant rail. Falls back to IBAN if no merchant account yet. |
 | Bank Transfer | Manual IBFT | Returns account details + reference. Confirmed same business day. |
 
+
 ### State Management
 
 - `authStore.js` — global auth state via Zustand: `{ user, token, setAuth, logout }`
