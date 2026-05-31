@@ -1,284 +1,444 @@
-# LastCall 🎒
+# Last Call 🛍️
 
-> Pakistan's first surplus food rescue platform — connecting restaurants, bakeries, and cafés with customers through discounted "magic bags" of unsold food. Launching in Karachi.
+> **Pakistan's food waste rescue platform.** Last Call connects restaurants, bakeries, and cafés with customers through discounted surplus food bags — saving food, saving money, saving the planet. Launching in Karachi, scaling across Pakistan.
+
+---
+
+## What is Last Call?
+
+Every day, thousands of restaurants and bakeries across Pakistan throw away perfectly good food at closing time. Last Call solves this with a simple marketplace: partners list their surplus as discounted "magic bags", customers reserve and pick them up. Everyone wins — partners recover lost revenue, customers save up to 70%, and tonnes of food stay out of landfills.
+
+**Similar to:** Too Good To Go (Europe) — built specifically for the Pakistani market with local payment gateways, WhatsApp-first notifications, and cash-first UX.
 
 ---
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
+- [Architecture](#architecture)
 - [Repository Structure](#repository-structure)
-- [Backend](#backend)
-- [Customer App](#customer-app)
-- [Partner App](#partner-app)
-- [Admin Dashboard](#admin-dashboard)
+- [Tech Stack](#tech-stack)
+- [Features](#features)
 - [Database Schema](#database-schema)
 - [API Reference](#api-reference)
+- [Real-Time Events](#real-time-events)
+- [Payment Gateways](#payment-gateways)
+- [Notifications](#notifications)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
+- [Running the Apps](#running-the-apps)
 
 ---
 
-## Project Overview
+## Architecture
 
-LastCall is a **monorepo** containing three applications and one shared backend:
-
-| App | Platform | Audience | Tech Stack |
-|-----|----------|----------|------------|
-| **Customer App** | iOS + Android | End users buying bags | React Native (Expo) |
-| **Partner App** | iOS + Android | Restaurant/cafe owners | React Native (Expo) |
-| **Admin Dashboard** | Web browser | LastCall ops team | Vanilla HTML/CSS/JS |
-| **Backend API** | Server | All apps | Node.js + Express + PostgreSQL |
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Last Call Platform                        │
+├──────────────┬──────────────┬──────────────┬────────────────────┤
+│ Customer App │ Partner App  │  Admin SPA   │  Backend API       │
+│ React Native │ React Native │  Vite+React  │  Node.js+Express   │
+│ Expo Router  │ Expo Router  │  Tailwind    │  TypeScript        │
+│ TanStack Q.  │ TanStack Q.  │  TanStack Q. │  Prisma ORM        │
+└──────────────┴──────────────┴──────────────┴────────────────────┤
+                                               PostgreSQL + Redis  │
+                                               Socket.io (RT)      │
+                                               S3 (files)          │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Repository Structure
 
 ```
-lastcall/
+LastCall/
+├── CLAUDE.md                         # LLM context file — read this first
+├── turbo.json                        # Turborepo pipeline config
+├── package.json                      # npm workspaces root
+├── docker-compose.yml                # PostgreSQL 16 + Redis 7
 │
-├── package.json               # Root workspace config — runs all apps via npm scripts
-├── docker-compose.yml         # PostgreSQL 16 + Redis 7 local dev containers
-├── .gitignore                 # Excludes node_modules, .env, uploads, build artifacts
+├── packages/
+│   └── shared/                       # @lastcall/shared — TypeScript types, enums & utils
+│       └── src/index.ts              # UserRole, OrderStatus, PaymentMethod, SocketEvents…
 │
-├── backend/                   # Express REST API
-│   ├── package.json           # Backend dependencies (pg, express, firebase-admin, jwt, twilio…)
-│   ├── .env.example           # Copy to .env and fill in secrets
+├── backend/                          # Node.js + Express + TypeScript API
+│   ├── prisma/
+│   │   └── schema.prisma             # Single source of truth for database (19 tables)
 │   └── src/
-│       ├── index.js           # App entry point — mounts all routes, starts server on :4000
-│       │
-│       ├── config/
-│       │   ├── db.js          # PostgreSQL connection pool (pg.Pool)
-│       │   ├── redis.js       # Redis client connection
-│       │   └── firebase.js    # Firebase Admin SDK init (for phone auth + FCM push)
-│       │
-│       ├── middleware/
-│       │   ├── auth.js        # verifyJWT, verifyFirebase, requireRole(...roles)
-│       │   ├── validate.js    # express-validator error handler middleware
-│       │   └── upload.js      # Multer config — image uploads, 5MB limit, saved to /uploads
-│       │
-│       ├── models/
-│       │   └── schema.sql     # Full DB schema — all tables, enums, indexes (auto-runs via Docker)
-│       │
-│       ├── routes/
-│       │   ├── auth.js        # POST /api/auth/firebase-login, /admin-login, /refresh, PATCH /fcm-token
-│       │   ├── bags.js        # GET /api/bags, GET /api/bags/:id, POST, PATCH, DELETE
-│       │   ├── orders.js      # POST /api/orders, GET list, GET/:id, PATCH/:id/status, POST/:id/verify-pickup
-│       │   ├── payments.js    # POST /api/payments/initiate, POST /api/payments/callback
-│       │   ├── partners.js    # GET /api/partners, /me, /:id, POST /register, PATCH /me, GET /me/stats
-│       │   ├── users.js       # GET/PATCH /api/users/me, GET/POST/DELETE /favourites, GET /orders
-│       │   └── admin.js       # GET /stats, /partners, /orders, /bags, /users — PATCH partner status
-│       │
-│       └── services/
-│           ├── notification.js  # sendNotification(token, title, body) + sendMulticast(tokens…)
-│           └── whatsapp.js      # Twilio WhatsApp — sendWhatsApp(), orderConfirmationMessage(), partnerNewOrderMessage()
+│       ├── index.ts                  # Express server bootstrap
+│       ├── config/                   # db, redis, firebase, s3, socket
+│       ├── middleware/               # auth, validate, errorHandler, rateLimit, upload, logger
+│       ├── errors/                   # Custom error classes (AppError, NotFoundError…)
+│       ├── api/v1/                   # Versioned API — router per resource
+│       │   ├── auth/
+│       │   ├── bags/
+│       │   ├── orders/
+│       │   ├── payments/
+│       │   │   └── gateways/         # JazzCash, Easypaisa, SadaPay, NayaPay, Raast
+│       │   ├── partners/
+│       │   │   └── templates.router.ts  # Recurring bag template CRUD
+│       │   ├── users/
+│       │   ├── reviews/
+│       │   ├── cities/
+│       │   ├── notifications/
+│       │   └── admin/
+│       └── services/                 # whatsapp, fcm, email, payout+template (cron), socket
 │
 ├── apps/
-│   │
-│   ├── customer/              # React Native — customer-facing mobile app
-│   │   ├── package.json       # Expo + React Navigation + Zustand + Axios + Firebase
-│   │   ├── app.json           # Expo config (name: "LastCall", bundle: pk.lastcall.customer)
-│   │   ├── .env.example       # EXPO_PUBLIC_API_URL, EXPO_PUBLIC_FIREBASE_* keys
-│   │   ├── App.js             # Root component — NavigationContainer + SafeAreaProvider
+│   ├── customer/                     # React Native + Expo (customer-facing)
 │   │   └── src/
-│   │       ├── services/
-│   │       │   └── api.js        # Axios instance — baseURL from env, JWT interceptor, 401 auto-logout
-│   │       ├── store/
-│   │       │   └── authStore.js  # Zustand store — { user, token, setAuth(), logout() }
-│   │       ├── navigation/
-│   │       │   ├── RootNavigator.js  # Auth gate — Login or Main stack (includes BagDetail + Payment)
-│   │       │   └── TabNavigator.js   # Bottom tabs: Home | Orders | Profile
-│   │       └── screens/
-│   │           ├── LoginScreen.js      # Phone OTP → Firebase → JWT → Zustand
-│   │           ├── HomeScreen.js       # Area chips (Burns Road, DHA, Clifton…) + bag listing
-│   │           ├── BagDetailScreen.js  # Bag info + Reserve button → navigates to PaymentScreen
-│   │           ├── PaymentScreen.js    # Payment method selector (Cash/JazzCash/Easypaisa/SadaPay/NayaPay/Raast/Bank Transfer)
-│   │           ├── OrdersScreen.js     # Customer order history with status badges
-│   │           └── ProfileScreen.js    # User info, favourites count, sign out
+│   │       ├── app/
+│   │       │   ├── (auth)/           # Login with Firebase phone OTP
+│   │       │   ├── (tabs)/           # Home, Explore, Orders, Profile
+│   │       │   ├── bag/[id].tsx      # Bag detail + reserve + tappable address
+│   │       │   └── order/[id].tsx    # Live order tracking (real-time)
+│   │       └── components/
+│   │           └── CountdownTimer.tsx  # Live "Closes in Xh Ym" on bag cards
 │   │
-│   ├── partner/               # React Native — restaurant/partner-facing mobile app
-│   │   ├── package.json       # Same Expo stack as customer
-│   │   ├── app.json           # Expo config (name: "LastCall Partner", bundle: pk.lastcall.partner)
-│   │   ├── .env.example       # Same env vars as customer
-│   │   ├── App.js             # Root component
-│   │   └── src/
-│   │       ├── services/
-│   │       │   └── api.js        # Axios instance — JWT auto-attach
-│   │       ├── store/
-│   │       │   └── authStore.js  # Zustand store — identical shape to customer
-│   │       ├── navigation/
-│   │       │   ├── RootNavigator.js  # Auth gate
-│   │       │   └── TabNavigator.js   # Dashboard | Bags | Orders | Profile
-│   │       └── screens/
-│   │           ├── LoginScreen.js      # Phone auth — same Firebase flow
-│   │           ├── DashboardScreen.js  # Today's stats + recent orders + quick actions
-│   │           ├── BagsScreen.js       # Own bags with status/qty, cancel action
-│   │           ├── CreateBagScreen.js  # New bag form — validates prices, times, date
-│   │           ├── OrdersScreen.js     # Orders with two-step cash verification modal
-│   │           └── ProfileScreen.js    # Partner info, commission rate, payout schedule
+│   ├── partner/                      # React Native + Expo (partner-facing)
+│   │   └── src/app/
+│   │       ├── (auth)/               # Login with Firebase phone OTP
+│   │       ├── (tabs)/               # Dashboard, Bags, Orders, Analytics, Profile+Reviews
+│   │       ├── bag/create.tsx        # Create new bag manually
+│   │       ├── bag/templates.tsx     # Recurring bag templates (auto-publish daily)
+│   │       └── onboarding/           # 3-step partner onboarding
 │   │
-│   └── admin/
-│       └── lastcall-admin.html  # Single-file admin dashboard — open directly in browser
+│   └── admin/                        # Vite + React + Tailwind CSS (web)
+│       └── src/
+│           ├── pages/                # Dashboard, Partners, Orders, Bags, Users, Payouts, Impact
+│           ├── components/           # Layout, shared UI
+│           └── lib/                  # api, queryClient, auth (zustand)
+│
+└── docs/
+    └── product/                      # Product documentation (PM-readable)
+        ├── README.md                 # Index
+        ├── 01-product-overview.md
+        ├── 02-user-personas.md
+        ├── 03-user-journeys.md
+        ├── 04-feature-specs.md
+        ├── 05-business-model.md
+        ├── 06-go-to-market.md
+        ├── 07-metrics-and-kpis.md
+        └── 08-product-roadmap.md
 ```
 
 ---
 
-## Backend
+## Tech Stack
 
-**Entry point:** `backend/src/index.js`
-**Port:** `4000`
-
-### Route Summary
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/auth/firebase-login` | None | Exchange Firebase ID token → LastCall JWT |
-| POST | `/api/auth/admin-login` | None | Email + password → JWT (admin only) |
-| POST | `/api/auth/refresh` | None | Refresh expired JWT |
-| PATCH | `/api/auth/fcm-token` | JWT | Save device push token |
-| GET | `/api/bags` | None | Browse available bags (filter: area, category, date) |
-| GET | `/api/bags/:id` | None | Single bag detail |
-| POST | `/api/bags` | Partner JWT | Create new magic bag |
-| PATCH | `/api/bags/:id` | Partner/Admin JWT | Update bag quantity or status |
-| DELETE | `/api/bags/:id` | Partner/Admin JWT | Cancel a bag |
-| POST | `/api/orders` | Customer JWT | Place a cash order (atomic with bag decrement + WhatsApp) |
-| GET | `/api/orders` | JWT | List orders (scoped by role) |
-| GET | `/api/orders/:id` | JWT | Single order detail |
-| PATCH | `/api/orders/:id/status` | Partner/Admin JWT | Advance: confirmed→ready→picked_up |
-| POST | `/api/orders/:id/verify-pickup` | Partner JWT | Two-step cash pickup verification |
-| POST | `/api/payments/initiate` | Customer JWT | Start digital payment (JazzCash/Easypaisa/SadaPay/NayaPay/Raast/Bank Transfer) |
-| POST | `/api/payments/callback` | None | Gateway webhook — creates order on payment success + WhatsApp |
-| GET | `/api/partners` | None | Public approved partner list |
-| GET | `/api/partners/me` | Partner JWT | Own partner profile |
-| GET | `/api/partners/me/stats` | Partner JWT | Today orders, total earnings, active bags |
-| GET | `/api/partners/:id` | None | Single partner + available bags |
-| POST | `/api/partners/register` | Partner JWT | Submit partner registration |
-| PATCH | `/api/partners/me` | Partner JWT | Update own partner profile |
-| GET | `/api/users/me` | JWT | Own user profile |
-| PATCH | `/api/users/me` | JWT | Update name, email, avatar |
-| GET | `/api/users/favourites` | Customer JWT | List favourite partners |
-| POST | `/api/users/favourites/:id` | Customer JWT | Add favourite |
-| DELETE | `/api/users/favourites/:id` | Customer JWT | Remove favourite |
-| GET | `/api/admin/stats` | Admin JWT | Dashboard KPIs |
-| GET | `/api/admin/partners` | Admin JWT | All partners with revenue stats |
-| PATCH | `/api/admin/partners/:id/status` | Admin JWT | Approve / suspend partner |
-| GET | `/api/admin/orders` | Admin JWT | All orders paginated |
-| GET | `/api/admin/bags` | Admin JWT | All bags for a date |
-| GET | `/api/admin/users` | Admin JWT | All customers |
-| POST | `/api/admin/seed-admin` | Secret | One-time admin user creation |
-| GET | `/health` | None | Health check — DB connection status |
+| Layer | Technology |
+|---|---|
+| **Backend** | Node.js, Express, TypeScript |
+| **Database** | PostgreSQL 16 (via Prisma ORM) |
+| **Cache** | Redis 7 (ioredis) |
+| **Real-time** | Socket.io 4 (JWT-authenticated rooms) |
+| **Authentication** | Firebase Auth (phone OTP) + JWT |
+| **File Storage** | AWS S3 / Cloudflare R2 |
+| **Customer App** | React Native, Expo SDK 51, Expo Router, TanStack Query, Zustand |
+| **Partner App** | React Native, Expo SDK 51, Expo Router, TanStack Query, Zustand |
+| **Admin Dashboard** | Vite, React 18, TypeScript, Tailwind CSS, TanStack Query |
+| **WhatsApp** | Twilio Messaging API |
+| **Push Notifications** | Firebase Cloud Messaging (FCM) |
+| **Email** | SendGrid |
+| **Validation** | Zod |
+| **Logging** | Pino (structured JSON + request IDs) |
+| **Monorepo** | npm workspaces + Turborepo |
+| **Containerization** | Docker Compose |
 
 ---
 
-## Customer App
+## Features
 
-**Tech:** React Native + Expo SDK 52 + React Navigation 6 + Zustand + Axios + Firebase Auth
+### Customer App
+- Firebase phone OTP authentication (no password needed)
+- Discover bags by area, category, price range
+- **Live countdown timers** on every bag card ("Closes in 1h 23m", red under 60 min)
+- Featured bags and partner listings
+- Bag detail with **tappable address → Google Maps**, pickup time, CO₂ impact, tags
+- Reserve & purchase (cash + 6 digital payment methods)
+- Live order tracking with real-time status updates (Socket.io)
+- 8-character cryptographically random pickup code
+- Order history with review prompts
+- Post-pickup ratings & reviews
+- Favourite partners — **instant push notification when a favourited partner lists a bag**
+- Personal food impact stats (meals saved, CO₂ prevented)
+- **Shareable impact card** — one tap shares to WhatsApp/Instagram with referral code
+- Promo code validation at checkout
+- Saved payment methods
+- Referral system (unique code → discount + reward)
+- Push notifications + WhatsApp confirmations
 
-### User Flow
+### Partner App
+- Firebase phone OTP authentication
+- 3-step onboarding with document upload (CNIC, business license)
+- Dashboard with today's stats: orders, revenue, active bags
+- **"Waiting Customers" count** — see how many fans will be notified on next listing
+- **Recurring bag templates** — create once, bags auto-publish every evening at 2 PM PKT
+- Create and manage magic bags manually (price, pickup window, photos, tags)
+- Real-time incoming order notifications (Socket.io)
+- Order management: mark Ready → Verify Pickup (two-step code verification)
+- Analytics tab: revenue charts, top-performing bags, order history
+- **Partner reply to reviews** — respond to customer reviews publicly
+- Payout history
+- Partner profile management
 
-```
-Launch → LoginScreen (phone OTP) → HomeScreen (area chips: Burns Road, DHA, Clifton…)
-       → BagDetailScreen (view bag) → PaymentScreen (choose payment method)
-       → OrdersScreen (track status) → ProfileScreen (account + favourites)
-```
+### Admin Dashboard
+- Email + password admin login
+- KPI dashboard: GMV, orders, commission, pending approvals
+- Partner management: approve/suspend, view CNIC/documents
+- Order monitoring with status filters and pagination
+- Bag inventory tracking across all partners
+- Customer management
+- Payout management: trigger weekly runs, mark as paid
+- Platform impact: meals saved, CO₂ prevented
+- City and area management (multi-city support)
+- Promo code & banner management
 
-### Payment Methods
-
-| Method | Type | Notes |
-|--------|------|-------|
-| Cash on Pickup | Manual | No upfront charge. Tracked via two-step verification. |
-| JazzCash | Digital wallet | Also supports debit/credit card at checkout. |
-| Easypaisa | Digital wallet | Also supports debit/credit card at checkout. |
-| SadaPay | Digital | Stripe-compatible API. |
-| NayaPay | Digital | Hosted checkout URL. |
-| Raast | Bank transfer | SBP instant rail. Falls back to IBAN if no merchant account yet. |
-| Bank Transfer | Manual IBFT | Returns account details + reference. Confirmed same business day. |
-
-
-### State Management
-
-- `authStore.js` — global auth state via Zustand: `{ user, token, setAuth, logout }`
-- `api.js` — Axios instance with auto-attach JWT and 401→logout interceptor
-
----
-
-## Partner App
-
-**Tech:** Same stack as Customer App
-
-### User Flow
-
-```
-Launch → LoginScreen (phone OTP) → DashboardScreen (today's summary)
-       → BagsScreen → CreateBagScreen (new bag form)
-       → OrdersScreen (two-step cash verification + status updates)
-       → ProfileScreen (settings + sign out)
-```
-
-### Cash Pickup Verification (Two-Step)
-
-When a customer pays cash, the partner must complete two steps before the order is marked collected:
-
-1. **Step 1 — Code check:** Partner enters the customer's pickup code to verify identity
-2. **Step 2 — Cash confirm:** Partner confirms cash has been physically received
-
-This triggers `POST /api/orders/:id/verify-pickup`, sets `cash_confirmed_at` timestamp, and marks the order `picked_up`. Commission is tracked for Monday payout.
-
-### Key Logic
-
-- `CreateBagScreen` validates: discounted price < original price, time HH:MM, date YYYY-MM-DD
-- `OrdersScreen` shows "Verify Pickup & Confirm Cash" button only on cash + confirmed orders
-- `DashboardScreen` fetches `/api/partners/me/stats` + `/api/orders` in parallel
-
----
-
-## Admin Dashboard
-
-**File:** `apps/admin/lastcall-admin.html`
-**How to use:** Open the HTML file directly in any browser. No server needed.
-
-### Features
-
-- **Login** — email + password → calls `/api/auth/admin-login`
-- **Dashboard** — 7 KPI cards (today orders, total revenue, partners, customers, pending approvals, bags)
-- **Partners** — filter by status, search, approve/suspend with one click
-- **Orders** — filter by status, full order table with payment method column
-- **Bags** — today's bags across all partners with inventory status
-- **Customers** — all registered customers with order count
+### Platform Infrastructure
+- Versioned REST API: `/api/v1/`
+- Real-time events via Socket.io (authenticated rooms — JWT required to connect)
+- Atomic bag reservation — race-condition safe (`updateMany WHERE quantityLeft >= qty`)
+- Payment webhook signature verification (HMAC) + idempotency (Redis)
+- Redis caching for bag listings, partner profiles, city data
+- Per-endpoint rate limiting (Redis-backed)
+- Weekly automated payout cron (Monday 9am PKT)
+- **Daily template auto-publish cron** (2pm PKT) — creates bags from active templates
+- Structured logging with Pino + request IDs
+- AWS S3 / R2 for images and documents
+- Zod-validated environment variables at startup
 
 ---
 
 ## Database Schema
 
-**File:** `backend/src/models/schema.sql`
+19 tables, 9 enums. Full schema: [backend/prisma/schema.prisma](backend/prisma/schema.prisma)
+
+### Enums
+```
+UserRole:      CUSTOMER | PARTNER | ADMIN
+PartnerStatus: PENDING | APPROVED | SUSPENDED
+BagStatus:     DRAFT | AVAILABLE | SOLD_OUT | CANCELLED | EXPIRED
+OrderStatus:   CONFIRMED | READY | PICKED_UP | CANCELLED | REFUNDED
+PaymentStatus: PENDING | PAID | FAILED | REFUNDED
+PaymentMethod: CASH | JAZZCASH | EASYPAISA | SADAPAY | NAYAPAY | RAAST | BANK_TRANSFER
+PayoutStatus:  PENDING | PROCESSING | COMPLETED | FAILED
+DocumentType:  CNIC | BUSINESS_LICENSE | BANK_STATEMENT | UTILITY_BILL
+NotifChannel:  PUSH | WHATSAPP | EMAIL | IN_APP
+```
 
 ### Tables
 
-| Table | Purpose | Key Columns |
-|-------|---------|-------------|
-| `users` | All app users | `firebase_uid`, `phone`, `role` (customer/partner/admin) |
-| `partners` | Partner profiles | `business_name`, `area`, `commission_pct`, `phone`, `status` |
-| `bags` | Magic bag listings | `partner_id`, `discounted_price`, `quantity_left`, `pickup_date`, `status` |
-| `orders` | Customer orders | `pickup_code`, `order_status`, `payment_method`, `total_amount`, `partner_payout`, `cash_confirmed_at` |
-| `payment_intents` | Digital payment tracking | `txn_ref`, `bag_id`, `user_id`, `amount`, `method`, `status`, `order_id` |
-| `favourites` | Customer favourites | `(user_id, partner_id)` composite PK |
+| Table | Purpose |
+|---|---|
+| `users` | All platform users (customer/partner/admin) |
+| `cities` | Multi-city support (Karachi, Lahore, Islamabad…) |
+| `areas` | Neighbourhoods within cities |
+| `partners` | Restaurant/café business profiles |
+| `partner_documents` | Onboarding docs (CNIC, license) |
+| `bags` | Magic bag listings |
+| `bag_templates` | Recurring bag templates — auto-publish daily at 2 PM |
+| `orders` | Customer orders (atomic with bag quantity) |
+| `payment_transactions` | All payment gateway records |
+| `saved_payment_methods` | Customer saved payment methods |
+| `reviews` | Post-pickup ratings, comments, and partner replies |
+| `favourites` | Customer → Partner favourites |
+| `payouts` | Weekly partner settlements |
+| `referrals` | Referral tracking |
+| `promotions` | Promo codes and homepage banners |
+| `promotion_uses` | Per-user promo code usage |
+| `notifications` | In-app notification log |
+| `impact_stats` | Daily platform-wide food waste impact |
+| `audit_logs` | Admin action log (with before/after state) |
 
-### ENUMs
+---
 
-- `user_role`: `customer`, `partner`, `admin`
-- `partner_status`: `pending`, `approved`, `suspended`
-- `bag_status`: `available`, `sold_out`, `cancelled`
-- `order_status`: `confirmed`, `ready`, `picked_up`, `cancelled`
-- `payment_status`: `pending`, `paid`, `refunded`
+## API Reference
 
-### Payment Intent Flow
+All endpoints are prefixed with `/api/v1`.
 
-Digital payments follow a two-phase pattern:
+### Auth
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/auth/firebase-login` | — | Exchange Firebase ID token → LastCall JWT |
+| POST | `/auth/admin-login` | — | Email + password → Admin JWT |
+| POST | `/auth/fcm-token` | JWT | Update FCM push token |
+| POST | `/auth/logout` | JWT | Logout + clear FCM token |
 
-1. `POST /api/payments/initiate` → creates a `payment_intents` row with `status=pending`, returns gateway payload
-2. Gateway calls `POST /api/payments/callback` → on success, creates the order and marks intent `completed`
+### Bags
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/bags` | — | List available bags (filter: city, area, date, category, priceMax) |
+| GET | `/bags/featured` | — | Featured bags |
+| GET | `/bags/:id` | — | Single bag detail |
+| POST | `/bags` | Partner | Create bag + notifies all fans via FCM |
+| PATCH | `/bags/:id` | Partner/Admin | Update bag |
+| DELETE | `/bags/:id` | Partner/Admin | Cancel bag |
 
-This prevents duplicate orders and handles the case where a bag sells out between initiation and payment.
+### Orders
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/orders` | Customer | Place order (atomic bag reservation, promo validation) |
+| GET | `/orders` | JWT | Scoped list with pagination (customer=own, partner=business, admin=all) |
+| GET | `/orders/:id` | JWT | Order detail |
+| PATCH | `/orders/:id/status` | Partner | Advance status (CONFIRMED→READY→PICKED_UP only) |
+| POST | `/orders/:id/verify-pickup` | Partner | Two-step cash verification |
+| POST | `/orders/:id/cancel` | Customer/Admin | Cancel + initiate refund |
+
+### Payments
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/payments/initiate` | Customer | Start digital payment |
+| POST | `/payments/callback/jazzcash` | Webhook+HMAC | JazzCash result |
+| POST | `/payments/callback/easypaisa` | Webhook+MD5 | Easypaisa result |
+| POST | `/payments/callback/sadapay` | Webhook+HMAC | SadaPay result |
+| POST | `/payments/callback/nayapay` | Webhook+HMAC | NayaPay result |
+| POST | `/payments/callback/raast` | Webhook | Raast result |
+
+### Partners
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/partners` | — | Approved partners (filter: city, area, category) |
+| GET | `/partners/:id` | — | Partner detail + current bags |
+| POST | `/partners/register` | JWT | Start onboarding |
+| GET | `/partners/me` | Partner | Own profile |
+| PATCH | `/partners/me` | Partner | Update profile |
+| POST | `/partners/me/documents` | Partner | Upload onboarding document |
+| GET | `/partners/me/stats` | Partner | Today's stats (incl. waitingCustomers, activeTemplates) |
+| GET | `/partners/me/analytics` | Partner | Revenue + bag analytics |
+| GET | `/partners/me/payouts` | Partner | Payout history |
+| GET | `/partners/me/templates` | Partner | List bag templates |
+| POST | `/partners/me/templates` | Partner | Create bag template |
+| PATCH | `/partners/me/templates/:id` | Partner | Update bag template |
+| PATCH | `/partners/me/templates/:id/toggle` | Partner | Activate / pause template |
+| DELETE | `/partners/me/templates/:id` | Partner | Delete template |
+
+### Users
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/users/me` | JWT | Own profile |
+| PATCH | `/users/me` | JWT | Update name/email |
+| PATCH | `/users/me/avatar` | JWT | Upload avatar |
+| GET | `/users/me/orders` | Customer | Order history |
+| GET | `/users/me/favourites` | Customer | Favourite partners |
+| POST | `/users/me/favourites/:id` | Customer | Add favourite |
+| DELETE | `/users/me/favourites/:id` | Customer | Remove favourite |
+| GET | `/users/me/impact` | JWT | Personal food impact stats |
+| GET | `/users/me/saved-payment-methods` | JWT | Saved payment methods |
+| POST | `/users/me/saved-payment-methods` | JWT | Save payment method |
+| DELETE | `/users/me/saved-payment-methods/:id` | JWT | Remove saved method |
+
+### Reviews
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/reviews` | Customer | Submit review (after PICKED_UP only) |
+| GET | `/reviews/partner/:id` | — | Partner's reviews (includes partner replies) |
+| PATCH | `/reviews/:id/reply` | Partner | Add/edit a reply to a customer review |
+| DELETE | `/reviews/:id` | Admin | Hide review |
+
+### Cities
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/cities` | — | Active cities |
+| GET | `/cities/:cityId/areas` | — | Areas in a city |
+
+### Notifications
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/notifications` | JWT | User's notifications |
+| PATCH | `/notifications/:id/read` | JWT | Mark read |
+| PATCH | `/notifications/read-all` | JWT | Mark all read |
+
+### Promotions
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/promotions/validate` | Customer | Validate promo code |
+| GET | `/promotions/banners` | — | Active homepage banners |
+
+### Admin
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/admin/stats` | Admin | Platform KPIs |
+| GET | `/admin/partners` | Admin | All partners |
+| PATCH | `/admin/partners/:id/status` | Admin | Approve/suspend (+ optional commissionPct) |
+| GET | `/admin/partners/:id/documents` | Admin | View onboarding docs |
+| PATCH | `/admin/partners/:id/documents/:docId` | Admin | Verify document |
+| GET | `/admin/orders` | Admin | All orders (paginated) |
+| GET | `/admin/users` | Admin | All customers |
+| POST | `/admin/users/admin` | Admin | Create admin user |
+| GET | `/admin/payouts` | Admin | All payouts |
+| POST | `/admin/payouts/run` | Admin | Trigger payout run |
+| PATCH | `/admin/payouts/:id` | Admin | Update payout status |
+| POST | `/admin/promotions` | Admin | Create promo/banner |
+| PATCH | `/admin/promotions/:id` | Admin | Update promo |
+| GET | `/admin/impact` | Admin | Platform impact stats |
+| POST | `/admin/cities` | Admin | Add city |
+| PATCH | `/admin/cities/:id` | Admin | Update city |
+
+### Health
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/health` | — | DB + Redis connection status |
+
+---
+
+## Real-Time Events
+
+Socket.io requires a valid JWT in the handshake (`auth: { token }`). Clients can only join rooms they are authorised for.
+
+| Room | Who Joins |
+|---|---|
+| `user:{userId}` | Customer — auto-joined on connect |
+| `partner:{partnerId}` | Partner — auto-joined on connect |
+| `city:{cityId}` | All users in a city (for new bag announcements) |
+| `admin` | Admin dashboard |
+
+| Event | Direction | Payload |
+|---|---|---|
+| `order:status_changed` | Server → Customer | `{ orderId, status, updatedAt }` |
+| `order:new` | Server → Partner | `{ orderId, bagTitle, customerName, pickupCode }` |
+| `bag:sold_out` | Server → All | `{ bagId }` |
+| `bag:new_listing` | Server → City | `{ bagId, title, price, partnerId, partnerName }` |
+| `partner:approved` | Server → Partner | `{ partnerId }` |
+| `notification:new` | Server → User | `{ title, body, payload }` |
+
+---
+
+## Payment Gateways
+
+All webhooks verify the gateway's HMAC signature before processing. Idempotency is enforced via Redis (24h TTL per `txnRef`). Payment amount is validated against the order total before marking as PAID.
+
+| Gateway | Signature | Notes |
+|---|---|---|
+| **JazzCash** | HMAC-SHA256 (sorted keys) | Most popular in Pakistan |
+| **Easypaisa** | MD5 hash | Telco-based wallet |
+| **SadaPay** | HMAC-SHA256 header | Neobank, Stripe-compatible API |
+| **NayaPay** | HMAC-SHA256 header | Neobank, hosted checkout |
+| **Raast** | — | SBP instant rail, manual IBAN |
+| **Bank Transfer** | — | Manual IBFT, fallback |
+| **Cash** | — | Verified at pickup via pickup code |
+
+### Commission Model
+- Last Call takes **20%** per order (configurable per partner via `commissionPct`)
+- Partners receive **80%**
+- Cash: partner collects full amount; Last Call's 20% deducted from Monday payout
+- Digital: Last Call holds full amount; partner receives 80% every Monday
+
+---
+
+## Notifications
+
+| Event | Push (FCM) | WhatsApp | Email |
+|---|---|---|---|
+| Bag listed by favourited partner | ✓ (fan multicast) | — | — |
+| Order placed (customer) | ✓ | ✓ | ✓ (receipt) |
+| Order placed (partner) | ✓ | ✓ | — |
+| Order ready for pickup | ✓ | ✓ | — |
+| Order picked up | ✓ | ✓ | ✓ |
+| Order cancelled | ✓ | ✓ | ✓ |
+| Partner approved | ✓ | ✓ | ✓ |
+| Weekly payout sent | — | ✓ | ✓ |
+| New review received | ✓ | — | — |
+| Referral used | ✓ | — | — |
 
 ---
 
@@ -286,159 +446,197 @@ This prevents duplicate orders and handles the case where a bag sells out betwee
 
 ### Prerequisites
 
-- Node.js ≥ 20
+- Node.js 20+
 - Docker Desktop
 - Expo CLI: `npm install -g expo-cli`
-- Expo Go app on your phone (iOS or Android)
+- A Firebase project with phone authentication enabled
 
 ### 1. Clone & Install
 
 ```bash
 git clone https://github.com/Ammarhere/LastCall.git
 cd LastCall
-npm install
-cd backend && npm install
+npm install --legacy-peer-deps
 ```
 
-### 2. Start Databases
+### 2. Start Database & Redis
 
+**With Docker:**
 ```bash
-docker compose up -d
-# PostgreSQL on :5432  |  Redis on :6379
-# Schema auto-runs from schema.sql on first boot
+docker-compose up -d
+```
+
+**Without Docker (macOS via Homebrew):**
+```bash
+# Install if needed
+git clone https://github.com/Homebrew/brew ~/.homebrew
+eval "$(~/.homebrew/bin/brew shellenv)"
+brew install postgresql@16 redis
+
+# Start services
+pg_ctl -D ~/Library/Application\ Support/Homebrew/var/postgresql@16 start
+redis-server --daemonize yes
+
+# Create DB
+createdb lastcall
+psql postgres -c "CREATE USER lastcall WITH PASSWORD 'lastcall_dev_pw' CREATEDB;"
+psql postgres -c "GRANT ALL PRIVILEGES ON DATABASE lastcall TO lastcall;"
 ```
 
 ### 3. Configure Environment
 
 ```bash
 cp backend/.env.example backend/.env
-# Edit backend/.env — fill in all secrets
-cp apps/customer/.env.example apps/customer/.env
-cp apps/partner/.env.example  apps/partner/.env
+# Minimum required: DATABASE_URL, REDIS_URL, JWT_SECRET
+# Firebase vars optional in dev — backend starts in stub mode without them
+
+# Mobile apps — use your Mac's local IP (not localhost)
+echo "EXPO_PUBLIC_API_URL=http://$(ipconfig getifaddr en0):4000" > apps/customer/.env
+echo "EXPO_PUBLIC_SOCKET_URL=http://$(ipconfig getifaddr en0):4000" >> apps/customer/.env
+cp apps/customer/.env apps/partner/.env
 ```
 
-### 4. Create First Admin User
+### 4. Run Database Migrations
 
 ```bash
-curl -X POST http://localhost:4000/api/admin/seed-admin \
+cd backend
+npx prisma migrate dev --name init
+npx prisma generate
+```
+
+### 5. Create First Admin
+
+```bash
+# Start backend first, then:
+curl -X POST http://localhost:4000/api/v1/auth/admin-login \
   -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@lastcall.pk",
-    "password": "Admin123!",
-    "name": "LastCall Admin",
-    "secret": "YOUR_JWT_SECRET_VALUE"
-  }'
+  -d '{"email":"admin@lastcall.pk","password":"Admin@123456"}'
 ```
 
-### 5. Run All Apps
+Or create directly in the DB (see CLAUDE.md for the full psql command).
 
-Open **4 separate terminals:**
+### 6. Run Everything
 
 ```bash
-# Terminal 1 — Backend API
-npm run backend:dev
+# Backend (port 4000):
+npm run backend
 
-# Terminal 2 — Admin Dashboard
-# Open apps/admin/lastcall-admin.html in your browser
+# Admin dashboard (port 5173) — new tab:
+npm run admin
 
-# Terminal 3 — Customer App
-npm run customer
+# Customer app (Expo Go) — new tab:
+cd apps/customer && npx expo start --tunnel --clear
 
-# Terminal 4 — Partner App
-npm run partner
+# Partner app (Expo Go) — new tab:
+cd apps/partner && npx expo start --tunnel --clear
 ```
 
-### 6. Verify Backend
+### 7. Login (Development Mode)
 
-```bash
-curl http://localhost:4000/health
-# → {"status":"ok","db":"connected","ts":"..."}
-```
+Firebase phone auth requires a native development build. For **Expo Go testing**, use the built-in dev login:
+- Enter any phone number
+- Enter OTP: `123456`
+- You're logged in
+
+> This dev login is blocked in production (`NODE_ENV=production`).
 
 ---
 
 ## Environment Variables
 
-### `backend/.env`
+### Backend (`backend/.env`)
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `PORT` | API server port | `4000` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://lastcall:lastcall_dev_pw@localhost:5432/lastcall` |
-| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
-| `JWT_SECRET` | JWT signing secret (min 32 chars) | `a_long_random_string_here` |
-| `JWT_EXPIRES_IN` | Token expiry | `7d` |
-| `FIREBASE_PROJECT_ID` | Firebase project ID | `lastcall-karachi` |
-| `FIREBASE_PRIVATE_KEY` | Firebase service account private key | `"-----BEGIN PRIVATE KEY-----\n..."` |
-| `FIREBASE_CLIENT_EMAIL` | Firebase service account email | `firebase-adminsdk@project.iam.gserviceaccount.com` |
-| `TWILIO_ACCOUNT_SID` | Twilio account SID | `ACxxxxxxxxxxxx` |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token | `your_auth_token` |
-| `TWILIO_WHATSAPP_FROM` | Twilio WhatsApp sandbox number | `whatsapp:+14155238886` |
-| `JAZZCASH_MERCHANT_ID` | JazzCash merchant ID | `your_merchant_id` |
-| `JAZZCASH_PASSWORD` | JazzCash password | `your_password` |
-| `JAZZCASH_INTEGRITY_SALT` | JazzCash integrity salt | `your_salt` |
-| `JAZZCASH_ENV` | JazzCash environment | `sandbox` or `production` |
-| `EASYPAISA_STORE_ID` | Easypaisa store ID | `your_store_id` |
-| `EASYPAISA_HASH_KEY` | Easypaisa hash key | `your_hash_key` |
-| `EASYPAISA_ENV` | Easypaisa environment | `sandbox` or `production` |
-| `SADAPAY_SECRET_KEY` | SadaPay secret key | `sk_test_xxxx` |
-| `SADAPAY_PUBLISHABLE_KEY` | SadaPay publishable key | `pk_test_xxxx` |
-| `NAYAPAY_MERCHANT_ID` | NayaPay merchant ID | `your_merchant_id` |
-| `NAYAPAY_API_KEY` | NayaPay API key | `your_api_key` |
-| `RAAST_CLIENT_ID` | Raast client ID (optional) | `your_client_id` |
-| `RAAST_CLIENT_SECRET` | Raast client secret (optional) | `your_client_secret` |
-| `RAAST_ENV` | Raast environment | `sandbox` or `production` |
-| `BANK_ACCOUNT_NAME` | LastCall bank account name | `LastCall Pakistan` |
-| `BANK_ACCOUNT_NUMBER` | Bank account number | `0000000000000` |
-| `BANK_IBAN` | Bank IBAN | `PK00XXXX0000000000000000` |
-| `BANK_NAME` | Bank name | `Meezan Bank` |
-| `APP_URL` | Backend public URL (for gateway callbacks) | `http://localhost:4000` |
+| Variable | Required | Description |
+|---|---|---|
+| `NODE_ENV` | ✓ | `development` / `production` / `test` |
+| `PORT` | ✓ | API server port (default: 4000) |
+| `DATABASE_URL` | ✓ | PostgreSQL connection string |
+| `REDIS_URL` | ✓ | Redis connection string |
+| `JWT_SECRET` | ✓ | Min 32 chars random string |
+| `JWT_EXPIRES_IN` | ✓ | Token expiry (e.g. `7d`) |
+| `FIREBASE_PROJECT_ID` | — | Firebase project ID (optional in dev) |
+| `FIREBASE_PRIVATE_KEY` | — | Firebase Admin private key |
+| `FIREBASE_CLIENT_EMAIL` | — | Firebase Admin client email |
+| `AWS_ACCESS_KEY_ID` | — | S3/R2 access key |
+| `AWS_SECRET_ACCESS_KEY` | — | S3/R2 secret |
+| `AWS_BUCKET_NAME` | — | S3 bucket name |
+| `AWS_REGION` | — | S3 region (default: `ap-south-1`) |
+| `TWILIO_ACCOUNT_SID` | — | Twilio account SID |
+| `TWILIO_AUTH_TOKEN` | — | Twilio auth token |
+| `TWILIO_WHATSAPP_FROM` | — | WhatsApp sender number |
+| `SENDGRID_API_KEY` | — | SendGrid API key |
+| `SENDGRID_FROM_EMAIL` | — | Sender email address |
+| `JAZZCASH_MERCHANT_ID` | — | JazzCash merchant ID |
+| `JAZZCASH_PASSWORD` | — | JazzCash password |
+| `JAZZCASH_INTEGRITY_SALT` | — | JazzCash HMAC salt |
+| `EASYPAISA_STORE_ID` | — | Easypaisa store ID |
+| `EASYPAISA_HASH_KEY` | — | Easypaisa hash key |
+| `SADAPAY_SECRET_KEY` | — | SadaPay secret key |
+| `SADAPAY_WEBHOOK_SECRET` | — | SadaPay webhook HMAC secret |
+| `NAYAPAY_API_KEY` | — | NayaPay API key |
+| `NAYAPAY_WEBHOOK_SECRET` | — | NayaPay webhook HMAC secret |
+| `RAAST_API_KEY` | — | Raast API key |
+| `FRONTEND_URL` | ✓ | Customer app URL (CORS whitelist) |
+| `ADMIN_URL` | ✓ | Admin dashboard URL (CORS whitelist) |
 
-### `apps/customer/.env` and `apps/partner/.env`
+### Mobile Apps (`.env`)
 
 | Variable | Description |
-|----------|-------------|
-| `EXPO_PUBLIC_API_URL` | Backend URL (`http://localhost:4000` for dev) |
-| `EXPO_PUBLIC_FIREBASE_API_KEY` | Firebase web API key |
+|---|---|
+| `EXPO_PUBLIC_API_URL` | Backend base URL (e.g. `http://localhost:4000`) |
+| `EXPO_PUBLIC_SOCKET_URL` | Socket.io server URL |
+| `EXPO_PUBLIC_FIREBASE_API_KEY` | Firebase API key |
 | `EXPO_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `EXPO_PUBLIC_FIREBASE_APP_ID` | Firebase app ID |
+| `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID |
+
+### Admin Dashboard (`apps/admin/.env`)
+
+| Variable | Description |
+|---|---|
+| `VITE_API_URL` | Backend base URL |
+| `VITE_SOCKET_URL` | Socket.io server URL |
 
 ---
 
-## Branch Strategy
+## Running the Apps
 
+### Backend (Port 4000)
+```bash
+cd backend && npm run dev
+# tsx watch — hot reloads on TypeScript changes
 ```
-main        ← production-ready code only
-develop     ← integration branch (all features merge here first)
-feature/*   ← e.g. feature/bag-listing, feature/otp-auth
-fix/*       ← e.g. fix/order-status-bug
-release/*   ← e.g. release/v1.0.0
+
+### Admin Dashboard (Port 5173)
+```bash
+cd apps/admin && npm run dev
+# Vite dev server with HMR
+```
+
+### Customer App
+```bash
+cd apps/customer && npx expo start
+# Scan QR with Expo Go
+```
+
+### Partner App
+```bash
+cd apps/partner && npx expo start
 ```
 
 ---
 
-## Commission Model
+## Project Background
 
-- LastCall takes **25%** of each order total (configurable per partner via `commission_pct`)
-- Partners receive **75%** (`partner_payout` column in orders table)
-- **Digital payments** — commission deducted automatically at order creation
-- **Cash payments** — full amount collected by partner at pickup; LastCall's 25% share is tracked via `cash_confirmed_at` and settled every Monday via JazzCash transfer
-- Commission rate is configurable per partner (`commission_pct` in partners table)
+Pakistan wastes approximately **40% of its food supply** annually. Last Call bridges restaurants and consumers with a win-win marketplace:
 
----
+- **Restaurants** sell surplus bags at 50–70% off instead of throwing food away
+- **Customers** eat well for a fraction of the normal price
+- **Last Call** takes 20% commission — only charged on successful sales
+- **The planet** benefits (2.5 kg CO₂ saved per meal rescued)
 
-## WhatsApp Notifications
-
-Powered by Twilio WhatsApp API (`backend/src/services/whatsapp.js`).
-
-| Trigger | Recipient | Message Contains |
-|---------|-----------|-----------------|
-| Order confirmed (digital) | Customer | Business name, pickup window, pickup code, amount |
-| Order confirmed (digital) | Partner | Customer name/phone, bag title, pickup code, payout amount |
-| Cash order placed | Customer | Business name, pickup window, pickup code |
-| Cash order placed | Partner | Customer details, pickup code, amount to collect |
-
-**Setup:** Uses Twilio sandbox for development (free). For production, requires Meta WhatsApp Business API approval. Add your number to the sandbox at [console.twilio.com](https://console.twilio.com).
+Launch city: **Karachi**. Next: Lahore, Islamabad.
 
 ---
 
-*Built for Karachi 🇵🇰 — scaling to all of Pakistan.*
+*Built with ❤️ for Pakistan*

@@ -1,11 +1,23 @@
 {
   "expo": {
-    "name": "LastCall",
+    "name": "Last Call",
     "slug": "lastcall-customer",
     "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "scheme": "lastcall",
     "orientation": "portrait",
-    "splash": { "backgroundColor": "#E53935" },
-    "android": { "package": "pk.lastcall.customer" },
-    "ios": { "bundleIdentifier": "pk.lastcall.customer" }
+    "splash": { "backgroundColor": "#16A34A" },
+    "android": {
+      "package": "pk.lastcall.customer"
+    },
+    "ios": {
+      "bundleIdentifier": "pk.lastcall.customer"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-location", { "locationAlwaysAndWhenInUsePermission": "Allow Last Call to use your location to find bags near you." }]
+    ],
+    "experiments": { "typedRoutes": true }
   }
 }

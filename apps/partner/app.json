@@ -1,11 +1,24 @@
 {
   "expo": {
-    "name": "LastCall Partner",
+    "name": "Last Call Partner",
     "slug": "lastcall-partner",
     "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "scheme": "lastcall-partner",
     "orientation": "portrait",
-    "splash": { "backgroundColor": "#2E7D32" },
-    "android": { "package": "pk.lastcall.partner" },
-    "ios": { "bundleIdentifier": "pk.lastcall.partner" }
+    "splash": { "backgroundColor": "#1d4ed8" },
+    "android": {
+      "package": "pk.lastcall.partner"
+    },
+    "ios": {
+      "bundleIdentifier": "pk.lastcall.partner"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-image-picker",
+      "expo-document-picker"
+    ],
+    "experiments": { "typedRoutes": true }
   }
 }

@@ -1,13 +1,31 @@
 {
   "name": "lastcall",
   "private": true,
-  "workspaces": ["backend", "apps/customer", "apps/partner"],
+  "workspaces": [
+    "packages/shared",
+    "backend",
+    "apps/customer",
+    "apps/partner",
+    "apps/admin"
+  ],
   "scripts": {
-    "backend":  "npm --workspace=backend start",
+    "dev": "concurrently \"npm --workspace=backend run dev\" \"npm --workspace=apps/admin run dev\"",
+    "backend": "npm --workspace=backend run dev",
     "customer": "npm --workspace=apps/customer run start",
-    "partner":  "npm --workspace=apps/partner run start"
+    "partner": "npm --workspace=apps/partner run start",
+    "admin": "npm --workspace=apps/admin run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "db:migrate": "npm --workspace=backend run db:migrate",
+    "db:studio": "npm --workspace=backend run db:studio"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "turbo": "^2.0.0"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   }
 }
