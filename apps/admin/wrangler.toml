@@ -1,7 +1,2 @@
+name = "lastcall-admin"
 pages_build_output_dir = "dist"
-
-[build]
-  command = "npx vite build"
-
-[build.environment]
-  NODE_VERSION = "20"
