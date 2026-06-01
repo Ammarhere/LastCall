@@ -5,9 +5,11 @@ import { router } from 'expo-router';
 import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { formatPKR } from '@lastcall/shared';
+import { useSocket } from '../../hooks/useSocket';
 
 export default function DashboardScreen() {
   const { user } = useAuthStore();
+  useSocket(); // Real-time: new orders auto-refresh stats
 
   const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['partner-stats'],
