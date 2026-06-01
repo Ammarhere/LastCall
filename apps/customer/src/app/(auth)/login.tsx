@@ -82,6 +82,7 @@ export default function LoginScreen() {
               maxLength={6}
               autoFocus
             />
+            <Text style={styles.hint}>For testing enter: 123456</Text>
             <TouchableOpacity
               style={[styles.btn, (loading || otp.length < 4) && styles.btnDisabled]}
               onPress={handleVerify}
@@ -127,4 +128,5 @@ const styles = StyleSheet.create({
   btnText:      { color: '#fff', fontSize: 16, fontWeight: '700' },
   changeBtn:    { padding: 14, alignItems: 'center' },
   changeBtnText:{ color: '#16A34A', fontSize: 14, fontWeight: '600' },
+  hint:         { fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: -8, marginBottom: 16 },
 });
