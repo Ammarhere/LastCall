@@ -66,10 +66,6 @@ export default function OnboardingStep2() {
         <Text style={styles.btnText}>Next: Submit for Review →</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.skipBtn} onPress={() => router.push('/onboarding/step3-review')}>
-        <Text style={styles.skipText}>Skip for now</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={styles.backText}>← Back to Step 1</Text>
       </TouchableOpacity>
@@ -92,8 +88,6 @@ const styles = StyleSheet.create({
   docStatus:    { fontSize: 12, color: '#6b7280', marginTop: 2 },
   btn:          { backgroundColor: '#1d4ed8', borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 16 },
   btnText:      { color: '#fff', fontSize: 15, fontWeight: '700' },
-  skipBtn:      { padding: 14, alignItems: 'center' },
-  skipText:     { color: '#6b7280', fontSize: 13 },
   backBtn:      { padding: 10, alignItems: 'center' },
   backText:     { color: '#1d4ed8', fontSize: 13 },
 });
