@@ -20,7 +20,10 @@ export default function LoginPage() {
       login(data.data.token, { id: '', email, role: 'ADMIN' });
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.error ?? 'Login failed');
+      const msg = err.response?.data?.error
+        ?? err.message
+        ?? 'Login failed';
+      setError(`${msg} (API: ${import.meta.env.VITE_API_URL ?? 'NOT SET'})`);
     } finally {
       setLoading(false);
     }
