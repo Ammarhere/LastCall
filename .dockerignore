@@ -1,0 +1,12 @@
+node_modules
+.git
+.expo
+*.log
+.env
+*.env
+apps/customer
+apps/partner
+apps/admin
+docs
+dump.rdb
+*.rdb
