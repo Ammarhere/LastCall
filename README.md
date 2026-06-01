@@ -88,26 +88,42 @@ LastCall/
 │   ├── customer/                     # React Native + Expo (customer-facing)
 │   │   └── src/
 │   │       ├── app/
-│   │       │   ├── (auth)/           # Login with Firebase phone OTP
+│   │       │   ├── (auth)/           # Login screen
 │   │       │   ├── (tabs)/           # Home, Explore, Orders, Profile
-│   │       │   ├── bag/[id].tsx      # Bag detail + reserve + tappable address
-│   │       │   └── order/[id].tsx    # Live order tracking (real-time)
-│   │       └── components/
-│   │           └── CountdownTimer.tsx  # Live "Closes in Xh Ym" on bag cards
+│   │       │   ├── bag/[id].tsx      # Bag detail + reserve + tappable address → Maps
+│   │       │   ├── order/[id].tsx    # Live order tracking + pickup code
+│   │       │   ├── review/[id].tsx   # Star rating + comment form
+│   │       │   ├── partner/[id].tsx  # Partner profile + bags + reviews
+│   │       │   ├── edit-profile.tsx  # Update name + email
+│   │       │   ├── favourites.tsx    # Saved partner list
+│   │       │   ├── notifications.tsx # In-app notification centre
+│   │       │   └── payment-methods.tsx # Saved payment methods
+│   │       ├── components/
+│   │       │   └── CountdownTimer.tsx  # Live "Closes in Xh Ym" on bag cards
+│   │       ├── hooks/
+│   │       │   └── useSocket.ts      # Real-time Socket.io connection
+│   │       └── store/
+│   │           └── authStore.ts      # Zustand auth state
 │   │
 │   ├── partner/                      # React Native + Expo (partner-facing)
 │   │   └── src/app/
-│   │       ├── (auth)/               # Login with Firebase phone OTP
+│   │       ├── (auth)/               # Login screen
 │   │       ├── (tabs)/               # Dashboard, Bags, Orders, Analytics, Profile+Reviews
-│   │       ├── bag/create.tsx        # Create new bag manually
-│   │       ├── bag/templates.tsx     # Recurring bag templates (auto-publish daily)
+│   │       ├── bag/create.tsx        # Manual bag creation form
+│   │       ├── bag/templates.tsx     # Recurring bag templates (auto-publish 2PM PKT)
+│   │       ├── payouts.tsx           # Weekly payout history
+│   │       ├── edit-profile.tsx      # Edit business name, address, instructions
+│   │       ├── documents.tsx         # Upload CNIC, business license
 │   │       └── onboarding/           # 3-step partner onboarding
+│   │           ├── step1-business.tsx  # Business info + city/area picker (from API)
+│   │           ├── step2-documents.tsx # CNIC upload (required to proceed)
+│   │           └── step3-review.tsx    # Confirmation — pending admin approval
 │   │
 │   └── admin/                        # Vite + React + Tailwind CSS (web)
 │       └── src/
-│           ├── pages/                # Dashboard, Partners, Orders, Bags, Users, Payouts, Impact
-│           ├── components/           # Layout, shared UI
-│           └── lib/                  # api, queryClient, auth (zustand)
+│           ├── pages/                # Login, Dashboard, Partners, Orders, Bags, Users, Payouts, Impact
+│           ├── components/           # Layout (sidebar nav)
+│           └── lib/                  # api.ts, queryClient.ts, auth.ts (zustand)
 │
 └── docs/
     └── product/                      # Product documentation (PM-readable)
@@ -128,22 +144,22 @@ LastCall/
 
 | Layer | Technology |
 |---|---|
-| **Backend** | Node.js, Express, TypeScript |
-| **Database** | PostgreSQL 16 (via Prisma ORM) |
-| **Cache** | Redis 7 (ioredis) |
+| **Backend** | Node.js 20, Express 4, TypeScript 5 |
+| **Database** | PostgreSQL 16 (Neon, via Prisma ORM) |
+| **Cache** | Redis 8 (Upstash, ioredis, TLS) |
 | **Real-time** | Socket.io 4 (JWT-authenticated rooms) |
 | **Authentication** | Firebase Auth (phone OTP) + JWT |
-| **File Storage** | AWS S3 / Cloudflare R2 |
-| **Customer App** | React Native, Expo SDK 51, Expo Router, TanStack Query, Zustand |
-| **Partner App** | React Native, Expo SDK 51, Expo Router, TanStack Query, Zustand |
-| **Admin Dashboard** | Vite, React 18, TypeScript, Tailwind CSS, TanStack Query |
-| **WhatsApp** | Twilio Messaging API |
+| **File Storage** | Cloudinary (free 25GB — photos, logos, CNIC docs) |
+| **Customer App** | React Native 0.81, Expo SDK 54, Expo Router 6, TanStack Query 5, Zustand |
+| **Partner App** | React Native 0.81, Expo SDK 54, Expo Router 6, TanStack Query 5, Zustand |
+| **Admin Dashboard** | Vite 5, React 18, TypeScript, Tailwind CSS, TanStack Query |
 | **Push Notifications** | Firebase Cloud Messaging (FCM) |
-| **Email** | SendGrid |
+| **Email** | Resend (free 3K/month) |
+| **WhatsApp** | Twilio (disabled — enabled when `TWILIO_*` env vars set) |
 | **Validation** | Zod |
 | **Logging** | Pino (structured JSON + request IDs) |
 | **Monorepo** | npm workspaces + Turborepo |
-| **Containerization** | Docker Compose |
+| **Hosting** | Render (backend), Cloudflare Pages (admin) |
 
 ---
 
@@ -158,19 +174,21 @@ LastCall/
 - Reserve & purchase (cash + 6 digital payment methods)
 - Live order tracking with real-time status updates (Socket.io)
 - 8-character cryptographically random pickup code
-- Order history with review prompts
-- Post-pickup ratings & reviews
+- Post-pickup star ratings & comments
+- Partner profile page (bags, reviews, partner replies)
 - Favourite partners — **instant push notification when a favourited partner lists a bag**
 - Personal food impact stats (meals saved, CO₂ prevented)
 - **Shareable impact card** — one tap shares to WhatsApp/Instagram with referral code
 - Promo code validation at checkout
-- Saved payment methods
+- Saved payment methods management
+- In-app notification centre
+- Edit profile (name + email)
 - Referral system (unique code → discount + reward)
 - Push notifications + WhatsApp confirmations
 
 ### Partner App
 - Firebase phone OTP authentication
-- 3-step onboarding with document upload (CNIC, business license)
+- 3-step onboarding: business info (city/area picker) → CNIC upload → pending review
 - Dashboard with today's stats: orders, revenue, active bags
 - **"Waiting Customers" count** — see how many fans will be notified on next listing
 - **Recurring bag templates** — create once, bags auto-publish every evening at 2 PM PKT
@@ -179,13 +197,14 @@ LastCall/
 - Order management: mark Ready → Verify Pickup (two-step code verification)
 - Analytics tab: revenue charts, top-performing bags, order history
 - **Partner reply to reviews** — respond to customer reviews publicly
-- Payout history
-- Partner profile management
+- Payout history with gross/commission/net breakdown
+- Document upload (CNIC, business license, bank statement)
+- Edit business profile (name, description, address, pickup instructions)
 
 ### Admin Dashboard
-- Email + password admin login
-- KPI dashboard: GMV, orders, commission, pending approvals
-- Partner management: approve/suspend, view CNIC/documents
+- Email + password admin login at `https://lastcall-admin.pages.dev`
+- KPI dashboard: GMV, orders, commission, pending approvals, impact stats
+- Partner management: approve/suspend, view CNIC/documents, adjust commission %
 - Order monitoring with status filters and pagination
 - Bag inventory tracking across all partners
 - Customer management
@@ -261,6 +280,7 @@ All endpoints are prefixed with `/api/v1`.
 |---|---|---|---|
 | POST | `/auth/firebase-login` | — | Exchange Firebase ID token → LastCall JWT |
 | POST | `/auth/admin-login` | — | Email + password → Admin JWT |
+| POST | `/auth/dev-login` | — | Dev bypass — any phone + OTP `123456` (requires `ALLOW_DEV_LOGIN=true`) |
 | POST | `/auth/fcm-token` | JWT | Update FCM push token |
 | POST | `/auth/logout` | JWT | Logout + clear FCM token |
 
@@ -332,7 +352,7 @@ All endpoints are prefixed with `/api/v1`.
 |---|---|---|---|
 | POST | `/reviews` | Customer | Submit review (after PICKED_UP only) |
 | GET | `/reviews/partner/:id` | — | Partner's reviews (includes partner replies) |
-| PATCH | `/reviews/:id/reply` | Partner | Add/edit a reply to a customer review |
+| PATCH | `/reviews/:id/reply` | Partner | Add/edit partner reply to a review |
 | DELETE | `/reviews/:id` | Admin | Hide review |
 
 ### Cities
@@ -398,6 +418,7 @@ Socket.io requires a valid JWT in the handshake (`auth: { token }`). Clients can
 | `order:new` | Server → Partner | `{ orderId, bagTitle, customerName, pickupCode }` |
 | `bag:sold_out` | Server → All | `{ bagId }` |
 | `bag:new_listing` | Server → City | `{ bagId, title, price, partnerId, partnerName }` |
+| `bag:new_listing` | Server → City | `{ bagId, title, price, partnerId, partnerName }` — FCM multicast to fans |
 | `partner:approved` | Server → Partner | `{ partnerId }` |
 | `notification:new` | Server → User | `{ title, body, payload }` |
 

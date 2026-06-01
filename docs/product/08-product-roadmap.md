@@ -51,13 +51,17 @@ Everything needed for the first transaction to happen end-to-end.
 | **Suspended partner bags blocked from ordering** | ✅ Done |
 | **Partner category enum validation** | ✅ Done |
 | **Bag time range validation (start < end)** | ✅ Done |
-| **Fan notification on bag listing (push + socket)** | ✅ Done |
-| **Countdown timers on bag cards** | ✅ Done |
-| **Tappable address → Google Maps** | ✅ Done |
-| **"Waiting Customers" count on partner dashboard** | ✅ Done |
-| **Partner reply to reviews** | ✅ Done |
-| **Recurring bag templates (auto-publish 2PM daily)** | ✅ Done |
-| **Shareable impact card with referral code** | ✅ Done |
+| **Fan notification on bag listing (push + socket)** | ✅ Done (June 2026) |
+| **Countdown timers on bag cards** | ✅ Done (June 2026) |
+| **Tappable address → Google Maps** | ✅ Done (June 2026) |
+| **"Waiting Customers" count on partner dashboard** | ✅ Done (June 2026) |
+| **Partner reply to reviews** | ✅ Done (June 2026) |
+| **Recurring bag templates (auto-publish 2PM daily)** | ✅ Done (June 2026) |
+| **Shareable impact card with referral code** | ✅ Done (June 2026) |
+| **All missing screens** (review, favourites, notifications, payment-methods, partner profile, payouts, documents, edit-profile x2) | ✅ Done (June 2026) |
+| **Navigation headers + back buttons on all screens** | ✅ Done (June 2026) |
+| **Admin dashboard deployed** (Cloudflare Pages) | ✅ Done (June 2026) |
+| **Backend deployed live** (Render) | ✅ Done (June 2026) |
 
 ---
 

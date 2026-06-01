@@ -135,14 +135,15 @@ LastCall/
 | File storage | AWS S3 / Cloudflare R2 | Bag photos, partner logos, CNIC uploads |
 | Validation | Zod | All request bodies and env vars |
 | Logging | Pino | Structured JSON, request IDs |
-| Email | SendGrid | Order receipts, payout reports, partner approvals |
-| WhatsApp | Twilio | Order confirmations — primary notification channel |
-| Push notifications | Firebase FCM | Secondary notification channel |
-| Customer app | React Native + Expo SDK 51 | Expo Router (file-based navigation) |
-| Partner app | React Native + Expo SDK 51 | Expo Router, react-native-chart-kit for analytics |
+| Email | Resend | Order receipts, payout reports, partner approvals (free 3K/month) |
+| File storage | Cloudinary | Bag photos, partner logos, CNIC docs (free 25GB) |
+| WhatsApp | Twilio | Disabled — enabled when `TWILIO_*` env vars set |
+| Push notifications | Firebase FCM | Real-time push to customer + partner apps |
+| Customer app | React Native 0.81 + Expo SDK 54 | Expo Router 6 (file-based navigation) |
+| Partner app | React Native 0.81 + Expo SDK 54 | Expo Router 6, react-native-chart-kit |
 | Admin dashboard | Vite + React 18 + Tailwind CSS | SPA, React Router v6, Recharts |
 | Monorepo tooling | Turborepo + npm workspaces | `@lastcall/shared` package |
-| Containerization | Docker Compose | postgres + redis only; backend runs locally |
+| Hosting | Render (backend) + Cloudflare Pages (admin) | Both auto-deploy on `git push main` |
 
 ---
 
@@ -407,6 +408,7 @@ Webhook callbacks land at `POST /api/v1/payments/callback/{gateway}`. Each gatew
 
 | Event | WhatsApp | FCM Push | Email |
 |---|---|---|---|
+| **Bag listed → fans** (favourited users) | — | ✓ multicast | — |
 | Order placed → customer | ✓ | ✓ | ✓ (receipt) |
 | Order placed → partner | ✓ | ✓ | — |
 | Order marked ready | ✓ | ✓ | — |
@@ -416,7 +418,8 @@ Webhook callbacks land at `POST /api/v1/payments/callback/{gateway}`. Each gatew
 | Weekly payout sent | ✓ | — | ✓ |
 | New review received | — | ✓ | — |
 
-WhatsApp messages use Pakistani phone number format (`+92xxxxxxxxxx`). `normalizePKPhone()` in `packages/shared/src/index.ts` handles the normalisation.
+WhatsApp currently **disabled** — enabled when `TWILIO_*` env vars are set.
+FCM multicast sends to all users who have favourited a partner the moment a bag is listed.
 
 ---
 
@@ -516,12 +519,15 @@ These features are planned but not yet built:
 - Map view with geolocation-based bag discovery (`/explore` tab is list-only for now)
 - Partner cover photo upload (schema has `coverUrl`, UI not wired)
 - Promo banner display on customer home screen (DB model exists, frontend not wired)
+- Promo code application at checkout (API + DB exist, checkout UI not wired)
 - Admin city/area management pages (API exists, admin pages not added)
 - Referral discount application at checkout (tracking exists, discount logic not applied)
 - Full refund flow per gateway (structure exists, gateway-specific refund calls not implemented)
-- Push notification for review received (FCM service ready, not wired to review creation)
+- Push notification when review is received by partner (FCM ready, not wired)
 - Multi-language / Urdu support
-- Web version of customer app (mobile-only for now)
+- Web version of customer app (mobile-only)
+- Real Firebase phone OTP on mobile (requires EAS native build — currently using dev bypass)
+- WhatsApp notifications (code ready, needs `TWILIO_*` env vars + Business API approval)
 
 ---
 
@@ -534,4 +540,4 @@ These features are planned but not yet built:
 
 ---
 
-*Last updated: May 2026. If you're reading this and something feels stale, check `git log` and `backend/prisma/schema.prisma` for the latest truth.*
+*Last updated: June 2026. If you're reading this and something feels stale, check `git log` and `backend/prisma/schema.prisma` for the latest truth.*
