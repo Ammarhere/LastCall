@@ -17,22 +17,16 @@ const schema = z.object({
   FIREBASE_PRIVATE_KEY:  z.string().min(1),
   FIREBASE_CLIENT_EMAIL: z.string().email(),
 
-  AWS_ACCESS_KEY_ID:     z.string().optional(),
-  AWS_SECRET_ACCESS_KEY: z.string().optional(),
-  AWS_BUCKET_NAME:       z.string().optional(),
-  AWS_REGION:            z.string().default('ap-south-1'),
+  // File storage via Firebase Storage (free 5GB) — no S3 keys needed
+  // Bucket auto-derived from FIREBASE_PROJECT_ID in firebase.ts
 
   TWILIO_ACCOUNT_SID:    z.string().optional(),
   TWILIO_AUTH_TOKEN:     z.string().optional(),
   TWILIO_WHATSAPP_FROM:  z.string().optional(),
 
-  // Resend (email) — replaces SendGrid, free 3K/month
+  // Resend — free 3,000 emails/month (resend.com)
   RESEND_API_KEY:    z.string().optional(),
   RESEND_FROM_EMAIL: z.string().email().optional(),
-
-  // SendGrid kept for backwards compat — can remove once Resend is wired
-  SENDGRID_API_KEY:    z.string().optional(),
-  SENDGRID_FROM_EMAIL: z.string().email().optional(),
 
   JAZZCASH_MERCHANT_ID:      z.string().optional(),
   JAZZCASH_PASSWORD:         z.string().optional(),
