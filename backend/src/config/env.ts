@@ -17,8 +17,11 @@ const schema = z.object({
   FIREBASE_PRIVATE_KEY:  z.string().min(1),
   FIREBASE_CLIENT_EMAIL: z.string().email(),
 
-  // File storage via Firebase Storage (free 5GB) — no S3 keys needed
-  // Bucket auto-derived from FIREBASE_PROJECT_ID in firebase.ts
+  // File storage — Cloudinary (free 25GB, no card)
+  // Sign up at cloudinary.com → Dashboard → copy Cloud Name, API Key, API Secret
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY:    z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 
   TWILIO_ACCOUNT_SID:    z.string().optional(),
   TWILIO_AUTH_TOKEN:     z.string().optional(),
