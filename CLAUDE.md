@@ -291,6 +291,7 @@ cd apps/partner && npx expo start --tunnel --clear
 | Service | Provider | URL/Endpoint |
 |---|---|---|
 | Backend API | Render (free tier) | `https://lastcall-api.onrender.com` |
+| Admin Dashboard | Cloudflare Pages (free) | `https://lastcall-admin.pages.dev` |
 | PostgreSQL | Neon (free 0.5GB) | Singapore region |
 | Redis | Upstash (free 10K req/day) | Singapore region, TLS (`rediss://`) |
 | File Storage | Cloudinary (free 25GB) | cloudinary.com |
@@ -298,7 +299,9 @@ cd apps/partner && npx expo start --tunnel --clear
 | Push Notifications | Firebase FCM | Free forever |
 | Keep-alive | UptimeRobot | Pings `/health` every 5 min to prevent Render sleep |
 
-**Deployment:** GitHub → Render auto-deploys on push to `main`. Dockerfile at repo root.
+**Deployment:**
+- Backend: GitHub → Render auto-deploys on push to `main`
+- Admin: GitHub → Cloudflare Pages auto-deploys on push to `main`
 
 **Admin credentials (production):**
 - Email: `admin@lastcall.pk`
