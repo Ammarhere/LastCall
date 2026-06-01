@@ -261,18 +261,18 @@ Only active when `NODE_ENV=development`. Returns 404 in production.
 
 **React 19 workspace deduplication** — Root `package.json` has `overrides.react: "19.1.0"` to prevent React 18/19 dual-instance crash (`ReactSharedInternals.S undefined`).
 
-**Environment files needed to run:**
-- `backend/.env` — copy from `.env.example`, set `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`
-- `apps/customer/.env` — `EXPO_PUBLIC_API_URL=http://{MAC_IP}:4000`
-- `apps/partner/.env` — same as above
+**Environment files needed to run locally:**
+- `backend/.env` — copy from `.env.example`, set credentials (see section 15 below)
+- `apps/customer/.env` — `EXPO_PUBLIC_API_URL=http://{MAC_IP}:4000` for local, or `https://lastcall-api.onrender.com` for prod
+- `apps/partner/.env` — same as customer
 
-**Start sequence:**
+**Start sequence (local dev):**
 ```bash
 export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"
 eval "$(~/.homebrew/bin/brew shellenv)"
-# 1. Postgres
+# 1. Postgres (local only — skip if using Neon)
 pg_ctl -D ~/Library/Application\ Support/Homebrew/var/postgresql@16 start
-# 2. Redis
+# 2. Redis (local only — skip if using Upstash)
 redis-server --daemonize yes
 # 3. Backend
 cd backend && npm run dev
@@ -283,6 +283,50 @@ cd apps/customer && npx expo start --tunnel --clear
 # 6. Partner (new tab)
 cd apps/partner && npx expo start --tunnel --clear
 ```
+
+### 15. Production Deployment (June 2026)
+
+**Live infrastructure — all free, $0/month:**
+
+| Service | Provider | URL/Endpoint |
+|---|---|---|
+| Backend API | Render (free tier) | `https://lastcall-api.onrender.com` |
+| PostgreSQL | Neon (free 0.5GB) | Singapore region |
+| Redis | Upstash (free 10K req/day) | Singapore region, TLS (`rediss://`) |
+| File Storage | Cloudinary (free 25GB) | Cloud: `dekvqnqwt` |
+| Email | Resend (free 3K/month) | Sender: `onboarding@resend.dev` (until domain verified) |
+| Push Notifications | Firebase FCM | Free forever |
+| Keep-alive | UptimeRobot | Pings `/health` every 5 min to prevent Render sleep |
+
+**Deployment:** GitHub → Render auto-deploys on push to `main`. Dockerfile at repo root.
+
+**Admin credentials (production):**
+- Email: `admin@lastcall.pk`
+- Password: `Admin@123456`
+
+**Auth in current state:**
+- Phone OTP is bypassed via `POST /api/v1/auth/dev-login`
+- Requires `ALLOW_DEV_LOGIN=true` env var on Render
+- Any phone + OTP `123456` logs in
+- Real Firebase phone auth requires EAS native build — not yet set up
+
+**To deploy a new version:** just `git push origin main` — Render picks it up automatically.
+
+**Key Render environment variables** (set in Render dashboard → Environment):
+```
+NODE_ENV=production
+ALLOW_DEV_LOGIN=true          ← remove when real Firebase auth is set up
+FIREBASE_PRIVATE_KEY=...      ← single line with \n escape sequences
+DATABASE_URL=postgresql://... ← Neon connection string
+REDIS_URL=rediss://...        ← Upstash TLS URL
+CLOUDINARY_CLOUD_NAME=dekvqnqwt
+CLOUDINARY_API_KEY=714952576423387
+RESEND_API_KEY=re_63uhyWL1_...
+```
+
+**Upstash Redis note:** URL must use `rediss://` (double-s) for TLS. ioredis config has `tls: { rejectUnauthorized: false }` when URL starts with `rediss://`.
+
+**Cloudinary note:** Images are auto-optimized (`quality: auto, fetch_format: auto`) for fast loading on Pakistani mobile connections. PDFs uploaded as `resource_type: raw`.
 
 ---
 

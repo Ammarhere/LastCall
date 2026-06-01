@@ -551,30 +551,28 @@ Firebase phone auth requires a native development build. For **Expo Go testing**
 | `NODE_ENV` | ✓ | `development` / `production` / `test` |
 | `PORT` | ✓ | API server port (default: 4000) |
 | `DATABASE_URL` | ✓ | PostgreSQL connection string |
-| `REDIS_URL` | ✓ | Redis connection string |
+| `REDIS_URL` | ✓ | Redis connection string — use `rediss://` for Upstash TLS |
 | `JWT_SECRET` | ✓ | Min 32 chars random string |
 | `JWT_EXPIRES_IN` | ✓ | Token expiry (e.g. `7d`) |
-| `FIREBASE_PROJECT_ID` | — | Firebase project ID (optional in dev) |
-| `FIREBASE_PRIVATE_KEY` | — | Firebase Admin private key |
-| `FIREBASE_CLIENT_EMAIL` | — | Firebase Admin client email |
-| `AWS_ACCESS_KEY_ID` | — | S3/R2 access key |
-| `AWS_SECRET_ACCESS_KEY` | — | S3/R2 secret |
-| `AWS_BUCKET_NAME` | — | S3 bucket name |
-| `AWS_REGION` | — | S3 region (default: `ap-south-1`) |
-| `TWILIO_ACCOUNT_SID` | — | Twilio account SID |
+| `FIREBASE_PROJECT_ID` | ✓ | Firebase project ID |
+| `FIREBASE_PRIVATE_KEY` | ✓ | Firebase Admin private key (single line with `\n`) |
+| `FIREBASE_CLIENT_EMAIL` | ✓ | Firebase Admin client email |
+| `CLOUDINARY_CLOUD_NAME` | — | Cloudinary cloud name (free 25GB at cloudinary.com) |
+| `CLOUDINARY_API_KEY` | — | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | — | Cloudinary API secret |
+| `RESEND_API_KEY` | — | Resend API key (free 3K/month at resend.com) |
+| `RESEND_FROM_EMAIL` | — | Sender email (use domain email once verified) |
+| `ALLOW_DEV_LOGIN` | — | Set `true` to enable dev bypass login (OTP: 123456) |
+| `TWILIO_ACCOUNT_SID` | — | Twilio SID — WhatsApp disabled until set |
 | `TWILIO_AUTH_TOKEN` | — | Twilio auth token |
 | `TWILIO_WHATSAPP_FROM` | — | WhatsApp sender number |
-| `SENDGRID_API_KEY` | — | SendGrid API key |
-| `SENDGRID_FROM_EMAIL` | — | Sender email address |
 | `JAZZCASH_MERCHANT_ID` | — | JazzCash merchant ID |
 | `JAZZCASH_PASSWORD` | — | JazzCash password |
 | `JAZZCASH_INTEGRITY_SALT` | — | JazzCash HMAC salt |
 | `EASYPAISA_STORE_ID` | — | Easypaisa store ID |
 | `EASYPAISA_HASH_KEY` | — | Easypaisa hash key |
 | `SADAPAY_SECRET_KEY` | — | SadaPay secret key |
-| `SADAPAY_WEBHOOK_SECRET` | — | SadaPay webhook HMAC secret |
 | `NAYAPAY_API_KEY` | — | NayaPay API key |
-| `NAYAPAY_WEBHOOK_SECRET` | — | NayaPay webhook HMAC secret |
 | `RAAST_API_KEY` | — | Raast API key |
 | `FRONTEND_URL` | ✓ | Customer app URL (CORS whitelist) |
 | `ADMIN_URL` | ✓ | Admin dashboard URL (CORS whitelist) |
@@ -596,6 +594,41 @@ Firebase phone auth requires a native development build. For **Expo Go testing**
 |---|---|
 | `VITE_API_URL` | Backend base URL |
 | `VITE_SOCKET_URL` | Socket.io server URL |
+
+---
+
+## Production Deployment
+
+### Live Infrastructure (Free Stack)
+
+| Service | Provider | Cost |
+|---|---|---|
+| Backend API | [Render](https://render.com) free tier | $0 |
+| PostgreSQL | [Neon](https://neon.tech) free tier | $0 |
+| Redis | [Upstash](https://upstash.com) free tier | $0 |
+| File Storage | [Cloudinary](https://cloudinary.com) free 25GB | $0 |
+| Email | [Resend](https://resend.com) free 3K/month | $0 |
+| Push Notifications | Firebase FCM | $0 |
+| Keep-alive | [UptimeRobot](https://uptimerobot.com) | $0 |
+
+**Backend live at:** `https://lastcall-api.onrender.com`
+
+### Deploying Updates
+
+Every push to `main` triggers an automatic redeploy on Render:
+
+```bash
+git push origin main
+# Render picks it up automatically — no manual steps needed
+```
+
+### First-time Render Setup
+
+1. Connect GitHub repo to Render → Web Service
+2. Builder: **Docker**, Dockerfile: `./Dockerfile`
+3. Region: Singapore, Instance: Free
+4. Add all environment variables from the table above
+5. For `FIREBASE_PRIVATE_KEY` — paste as single line with `\n` escape sequences
 
 ---
 
