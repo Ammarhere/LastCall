@@ -66,7 +66,10 @@ router.post('/fcm-token', authenticate, validate(fcmSchema), async (req, res, ne
 // Accepts any Pakistani phone number + OTP "123456". Blocked in production.
 router.post('/dev-login', authLimiter, validate(z.object({ phone: z.string().min(10) })), async (req, res, next) => {
   try {
-    if (env.NODE_ENV === 'production') {
+    // Blocked in production UNLESS ALLOW_DEV_LOGIN=true is explicitly set
+    // Remove ALLOW_DEV_LOGIN from Render env once real Firebase auth is set up
+    const allowed = env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_LOGIN === 'true';
+    if (!allowed) {
       return res.status(404).json({ success: false, error: 'Not found' });
     }
 
