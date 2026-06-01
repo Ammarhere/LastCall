@@ -15,20 +15,21 @@ export default function LoginScreen() {
   const setToken = useAuthStore((s) => s.setToken);
 
   const handleSendOTP = () => {
-    if (!phone.trim() || phone.length < 10) return Alert.alert('Enter your phone number');
-    // In dev mode we skip real SMS — any code works (we verify "123456" or skip)
+    if (!phone.trim() || phone.replace(/\D/g, '').length < 10) {
+      return Alert.alert('Enter a valid phone number');
+    }
     setStep('otp');
   };
 
   const handleVerify = async () => {
-    if (!otp.trim()) return Alert.alert('Enter the OTP');
+    if (!otp.trim()) return Alert.alert('Enter the OTP sent to your phone');
     setLoading(true);
     try {
       const { data } = await api.post('/auth/dev-login', { phone });
       await setToken(data.data.token);
       router.replace('/(tabs)');
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error ?? 'Login failed');
+      Alert.alert('Error', err.response?.data?.error ?? 'Login failed. Try again.');
     } finally {
       setLoading(false);
     }
@@ -40,14 +41,12 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.inner}>
-        <Text style={styles.logo}>🛍️</Text>
-        <Text style={styles.title}>Last Call</Text>
-        <Text style={styles.tagline}>Save food. Save money.</Text>
-
-        {/* DEV MODE NOTICE */}
-        <View style={styles.devBadge}>
-          <Text style={styles.devText}>🔧 Dev Mode — OTP: 123456</Text>
+        {/* Logo */}
+        <View style={styles.logoRow}>
+          <Text style={styles.logoEmoji}>🛍️</Text>
+          <Text style={styles.logoText}>Last Call</Text>
         </View>
+        <Text style={styles.tagline}>Save food. Save money.</Text>
 
         {step === 'phone' ? (
           <>
@@ -55,34 +54,46 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="03xx-xxxxxxx"
+              placeholderTextColor="#9ca3af"
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
+              autoFocus
             />
-            <TouchableOpacity style={styles.btn} onPress={handleSendOTP}>
+            <TouchableOpacity
+              style={[styles.btn, !phone.trim() && styles.btnDisabled]}
+              onPress={handleSendOTP}
+              disabled={!phone.trim()}
+            >
               <Text style={styles.btnText}>Send OTP</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <Text style={styles.label}>Enter OTP (use 123456 in dev)</Text>
+            <Text style={styles.label}>Enter the 6-digit code sent to</Text>
+            <Text style={styles.phoneDisplay}>{phone}</Text>
             <TextInput
-              style={styles.input}
-              placeholder="123456"
+              style={[styles.input, styles.otpInput]}
+              placeholder="• • • • • •"
+              placeholderTextColor="#9ca3af"
               keyboardType="number-pad"
               value={otp}
               onChangeText={setOtp}
               maxLength={6}
               autoFocus
             />
-            <TouchableOpacity style={styles.btn} onPress={handleVerify} disabled={loading}>
+            <TouchableOpacity
+              style={[styles.btn, (loading || otp.length < 4) && styles.btnDisabled]}
+              onPress={handleVerify}
+              disabled={loading || otp.length < 4}
+            >
               {loading
                 ? <ActivityIndicator color="#fff" />
-                : <Text style={styles.btnText}>Verify & Login</Text>
+                : <Text style={styles.btnText}>Verify & Continue</Text>
               }
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setStep('phone')}>
-              <Text style={styles.link}>← Change number</Text>
+            <TouchableOpacity style={styles.changeBtn} onPress={() => { setStep('phone'); setOtp(''); }}>
+              <Text style={styles.changeBtnText}>← Change number</Text>
             </TouchableOpacity>
           </>
         )}
@@ -92,16 +103,28 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  inner:     { flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
-  logo:      { fontSize: 48, textAlign: 'center', marginBottom: 4 },
-  title:     { fontSize: 28, fontWeight: '800', color: '#16A34A', textAlign: 'center' },
-  tagline:   { fontSize: 14, color: '#6b7280', textAlign: 'center', marginBottom: 16 },
-  devBadge:  { backgroundColor: '#fef3c7', borderRadius: 8, padding: 8, marginBottom: 24, alignItems: 'center' },
-  devText:   { fontSize: 12, color: '#92400e', fontWeight: '600' },
-  label:     { fontSize: 14, color: '#374151', marginBottom: 8, fontWeight: '600' },
-  input:     { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12, padding: 14, fontSize: 16, marginBottom: 16 },
-  btn:       { backgroundColor: '#16A34A', borderRadius: 12, padding: 16, alignItems: 'center' },
-  btnText:   { color: '#fff', fontSize: 16, fontWeight: '700' },
-  link:      { textAlign: 'center', color: '#16A34A', marginTop: 16, fontSize: 14 },
+  container:    { flex: 1, backgroundColor: '#fff' },
+  inner:        { flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
+  logoRow:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  logoEmoji:    { fontSize: 36, marginRight: 8 },
+  logoText:     { fontSize: 32, fontWeight: '800', color: '#16A34A' },
+  tagline:      { fontSize: 15, color: '#6b7280', textAlign: 'center', marginBottom: 48 },
+  label:        { fontSize: 14, color: '#374151', fontWeight: '600', marginBottom: 8 },
+  phoneDisplay: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 16 },
+  input:        {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 14,
+    padding: 16,
+    fontSize: 16,
+    marginBottom: 16,
+    backgroundColor: '#f9fafb',
+    color: '#111827',
+  },
+  otpInput:     { fontSize: 24, textAlign: 'center', letterSpacing: 8, fontWeight: '700' },
+  btn:          { backgroundColor: '#16A34A', borderRadius: 14, padding: 16, alignItems: 'center' },
+  btnDisabled:  { opacity: 0.5 },
+  btnText:      { color: '#fff', fontSize: 16, fontWeight: '700' },
+  changeBtn:    { padding: 14, alignItems: 'center' },
+  changeBtnText:{ color: '#16A34A', fontSize: 14, fontWeight: '600' },
 });
