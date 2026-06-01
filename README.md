@@ -510,7 +510,7 @@ npx prisma generate
 # Start backend first, then:
 curl -X POST http://localhost:4000/api/v1/auth/admin-login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@lastcall.pk","password":"Admin@123456"}'
+  -d '{"email":"admin@lastcall.pk","password":"YOUR_ADMIN_PASSWORD"}'
 ```
 
 Or create directly in the DB (see CLAUDE.md for the full psql command).

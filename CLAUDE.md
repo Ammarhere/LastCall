@@ -293,7 +293,7 @@ cd apps/partner && npx expo start --tunnel --clear
 | Backend API | Render (free tier) | `https://lastcall-api.onrender.com` |
 | PostgreSQL | Neon (free 0.5GB) | Singapore region |
 | Redis | Upstash (free 10K req/day) | Singapore region, TLS (`rediss://`) |
-| File Storage | Cloudinary (free 25GB) | Cloud: `dekvqnqwt` |
+| File Storage | Cloudinary (free 25GB) | cloudinary.com |
 | Email | Resend (free 3K/month) | Sender: `onboarding@resend.dev` (until domain verified) |
 | Push Notifications | Firebase FCM | Free forever |
 | Keep-alive | UptimeRobot | Pings `/health` every 5 min to prevent Render sleep |
@@ -302,7 +302,7 @@ cd apps/partner && npx expo start --tunnel --clear
 
 **Admin credentials (production):**
 - Email: `admin@lastcall.pk`
-- Password: `Admin@123456`
+- Password: stored securely — do not commit to git
 
 **Auth in current state:**
 - Phone OTP is bypassed via `POST /api/v1/auth/dev-login`
@@ -317,11 +317,15 @@ cd apps/partner && npx expo start --tunnel --clear
 NODE_ENV=production
 ALLOW_DEV_LOGIN=true          ← remove when real Firebase auth is set up
 FIREBASE_PRIVATE_KEY=...      ← single line with \n escape sequences
+FIREBASE_PROJECT_ID=...
+FIREBASE_CLIENT_EMAIL=...
 DATABASE_URL=postgresql://... ← Neon connection string
 REDIS_URL=rediss://...        ← Upstash TLS URL
-CLOUDINARY_CLOUD_NAME=dekvqnqwt
-CLOUDINARY_API_KEY=714952576423387
-RESEND_API_KEY=re_63uhyWL1_...
+CLOUDINARY_CLOUD_NAME=...     ← from cloudinary.com dashboard
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+RESEND_API_KEY=...            ← from resend.com dashboard
+RESEND_FROM_EMAIL=...
 ```
 
 **Upstash Redis note:** URL must use `rediss://` (double-s) for TLS. ioredis config has `tls: { rejectUnauthorized: false }` when URL starts with `rediss://`.
