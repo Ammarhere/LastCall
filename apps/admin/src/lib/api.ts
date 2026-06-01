@@ -4,7 +4,7 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://lastcall-api.onrender.
 
 const api = axios.create({
   baseURL: BASE_URL + '/api/v1',
-  timeout: 15000,
+  timeout: 30000, // 30s — accounts for Render free tier cold start
 });
 
 api.interceptors.request.use((config) => {
