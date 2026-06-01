@@ -26,6 +26,11 @@ const schema = z.object({
   TWILIO_AUTH_TOKEN:     z.string().optional(),
   TWILIO_WHATSAPP_FROM:  z.string().optional(),
 
+  // Resend (email) — replaces SendGrid, free 3K/month
+  RESEND_API_KEY:    z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().email().optional(),
+
+  // SendGrid kept for backwards compat — can remove once Resend is wired
   SENDGRID_API_KEY:    z.string().optional(),
   SENDGRID_FROM_EMAIL: z.string().email().optional(),
 

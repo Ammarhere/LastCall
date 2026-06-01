@@ -1,22 +1,27 @@
-import twilio from 'twilio';
+/**
+ * WhatsApp Service (Twilio)
+ * Currently DISABLED — re-enable by setting TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
+ * and TWILIO_WHATSAPP_FROM in your environment variables.
+ * All functions are no-ops when credentials are not set.
+ */
+
 import { env } from '../config/env';
 import { normalizePKPhone, formatPKR } from '@lastcall/shared';
 import { prisma } from '../config/db';
 
-let client: ReturnType<typeof twilio> | null = null;
-
-function getClient() {
-  if (!client && env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN) {
-    client = twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
-  }
-  return client;
-}
+const WHATSAPP_ENABLED =
+  !!env.TWILIO_ACCOUNT_SID &&
+  !!env.TWILIO_AUTH_TOKEN &&
+  !!env.TWILIO_WHATSAPP_FROM;
 
 async function send(to: string, body: string) {
-  const c = getClient();
-  if (!c || !env.TWILIO_WHATSAPP_FROM) return;
+  if (!WHATSAPP_ENABLED) return; // Silently skip — WhatsApp not configured
+
+  // Lazy import so Twilio package is not required to be installed
+  const twilio = require('twilio');
+  const client = twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
   try {
-    await c.messages.create({
+    await client.messages.create({
       from: `whatsapp:${env.TWILIO_WHATSAPP_FROM}`,
       to:   `whatsapp:${normalizePKPhone(to)}`,
       body,
@@ -27,8 +32,16 @@ async function send(to: string, body: string) {
 }
 
 export async function sendOrderConfirmationWhatsApp(order: any) {
-  const customer = await prisma.user.findUnique({ where: { id: order.userId }, select: { phone: true, name: true } });
-  const partner  = await prisma.partner.findUnique({ where: { id: order.partnerId }, select: { businessName: true, address: true } });
+  if (!WHATSAPP_ENABLED) return;
+
+  const customer = await prisma.user.findUnique({
+    where: { id: order.userId },
+    select: { phone: true, name: true },
+  });
+  const partner = await prisma.partner.findUnique({
+    where: { id: order.partnerId },
+    select: { businessName: true, address: true },
+  });
 
   if (customer) {
     await send(
@@ -50,6 +63,7 @@ export async function sendOrderConfirmationWhatsApp(order: any) {
 }
 
 export async function sendPayoutWhatsApp(phone: string, amount: number, period: string) {
+  if (!WHATSAPP_ENABLED) return;
   await send(
     phone,
     `💸 *Last Call Payout*\n\nYour weekly payout of ${formatPKR(amount)} for ${period} has been processed.\n\nThank you for being a Last Call partner! 🙌`,

@@ -1,7 +1,8 @@
 import admin from 'firebase-admin';
 import { env } from './env';
 
-const isPlaceholder = env.FIREBASE_PROJECT_ID === 'lastcall-dev-placeholder' ||
+const isPlaceholder = !env.FIREBASE_PROJECT_ID ||
+  env.FIREBASE_PROJECT_ID.includes('placeholder') ||
   env.FIREBASE_PRIVATE_KEY.includes('placeholder');
 
 if (!admin.apps.length) {

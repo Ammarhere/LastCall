@@ -14,3 +14,8 @@ uploads/
 .vscode/
 dump.rdb
 *.rdb
+
+# Firebase config files (contain API keys — keep out of git)
+google-services.json
+GoogleService-Info.plist
+*-firebase-adminsdk-*.json

@@ -8,10 +8,12 @@
     "orientation": "portrait",
     "splash": { "backgroundColor": "#1d4ed8" },
     "android": {
-      "package": "pk.lastcall.partner"
+      "package": "pk.lastcall.partner",
+      "googleServicesFile": "./google-services.json"
     },
     "ios": {
-      "bundleIdentifier": "pk.lastcall.partner"
+      "bundleIdentifier": "pk.lastcall.partner",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "plugins": [
       "expo-router",
