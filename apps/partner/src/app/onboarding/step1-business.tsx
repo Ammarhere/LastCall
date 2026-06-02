@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import api from '../../../services/api';
-import { useAuthStore } from '../../../store/authStore';
+import api from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
 
 const CATEGORIES = ['Restaurant', 'Bakery', 'Café', 'Sweet Shop', 'Biryani', 'BBQ', 'Fast Food', 'Snacks', 'Desserts', 'Juice Bar'] as const;
 

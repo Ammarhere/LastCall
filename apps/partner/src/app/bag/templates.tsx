@@ -4,7 +4,7 @@ import {
   Switch, Alert, ActivityIndicator, Modal, TextInput, ScrollView,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../../services/api';
+import api from '../../services/api';
 import { formatPKR } from '@lastcall/shared';
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const;

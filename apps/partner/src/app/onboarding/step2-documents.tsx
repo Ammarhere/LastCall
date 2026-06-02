@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIn
 import * as DocumentPicker from 'expo-document-picker';
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import api from '../../../services/api';
+import api from '../../services/api';
 
 const DOC_TYPES = [
   { key: 'CNIC',             label: '🪪 CNIC / National ID' },

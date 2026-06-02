@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../../services/api';
-import { useAuthStore } from '../../../store/authStore';
+import api from '../services/api';
+import { useAuthStore } from '../store/authStore';
 
 const DOC_TYPES = [
   { key: 'CNIC',             label: '🪪 CNIC / National ID',  required: true },

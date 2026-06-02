@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import api from '../../../services/api';
+import api from '../../services/api';
 
 export default function CreateBagScreen() {
   const [form, setForm] = useState({

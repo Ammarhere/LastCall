@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import api from '../../../services/api';
-import { useAuthStore } from '../../../store/authStore';
+import api from '../services/api';
+import { useAuthStore } from '../store/authStore';
 
 export default function EditPartnerProfileScreen() {
   const { loadUser } = useAuthStore();
