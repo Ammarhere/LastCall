@@ -94,6 +94,22 @@ router.post('/dev-login', authLimiter, validate(z.object({ phone: z.string().min
   } catch (err) { next(err); }
 });
 
+// POST /api/v1/auth/refresh — Re-issue JWT with current DB role + partner ID
+// Call this after partner registration so the token reflects PARTNER role
+router.post('/refresh', authenticate, async (req, res, next) => {
+  try {
+    const user    = await prisma.user.findUnique({ where: { id: req.user!.userId } });
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    const partner = await prisma.partner.findUnique({ where: { userId: user.id } });
+    const token   = jwt.sign(
+      { userId: user.id, role: user.role, partnerId: partner?.id },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN as any },
+    );
+    res.json({ success: true, data: { token } });
+  } catch (err) { next(err); }
+});
+
 // POST /api/v1/auth/logout
 router.post('/logout', authenticate, async (req, res, next) => {
   try {

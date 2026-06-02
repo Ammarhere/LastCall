@@ -12,6 +12,7 @@ const CATEGORIES = ['Restaurant', 'Bakery', 'Café', 'Sweet Shop', 'Biryani', 'B
 
 export default function OnboardingStep1() {
   const loadUser = useAuthStore((s) => s.loadUser);
+  const setToken = useAuthStore((s) => s.setToken);
 
   const [businessName,       setBusinessName]       = useState('');
   const [category,           setCategory]           = useState('Restaurant');
@@ -45,6 +46,11 @@ export default function OnboardingStep1() {
       pickupInstructions: pickupInstructions || undefined,
     }),
     onSuccess: async () => {
+      // Refresh JWT — DB role is now PARTNER but old token still says CUSTOMER
+      try {
+        const { data } = await api.post('/auth/refresh');
+        await setToken(data.data.token);
+      } catch {}
       await loadUser();
       router.push('/onboarding/step2-documents');
     },
