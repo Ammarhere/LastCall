@@ -63,7 +63,7 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {/* Template prompt — shown when no templates exist yet */}
+        {/* Template prompt: shown when no templates exist yet */}
         {stats !== undefined && stats.activeTemplates === 0 && (
           <TouchableOpacity
             style={styles.templateBanner}
