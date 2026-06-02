@@ -39,7 +39,8 @@ export default function DashboardScreen() {
       {isLoading ? (
         <ActivityIndicator size="large" color="#1d4ed8" style={{ marginTop: 40 }} />
       ) : (
-        <View style={styles.statsGrid}>
+        <>
+          <View style={styles.statsGrid}>
           <StatCard label="Today's Orders"   value={String(stats?.todayOrders      ?? 0)} color="#3b82f6" icon="📦" />
           <StatCard label="Pending"          value={String(stats?.pendingOrders    ?? 0)} color="#f59e0b" icon="⏳" />
           <StatCard label="Active Bags"      value={String(stats?.activeBags       ?? 0)} color="#16A34A" icon="🛍️" />
@@ -77,6 +78,7 @@ export default function DashboardScreen() {
             <Text style={styles.templateBannerArrow}>→</Text>
           </TouchableOpacity>
         )}
+        </>
       )}
 
       <View style={styles.sectionHeader}>
